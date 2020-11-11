@@ -1,8 +1,8 @@
 ![Python package](https://github.com/NFI-Engineering/pdappend/workflows/Python%20package/badge.svg)
 
-# python-package
+# pdappend
 
-CLI package to append csv, xlsx, xls files.
+Run `pdappend` in a directory to append together csv, xlsx, and xls files.
 
 ## Instructions
 
