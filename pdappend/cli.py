@@ -16,6 +16,7 @@ def is_filetype(fname: str) -> bool:
     else:
         logging.warning(f"file {fname} is not .csv, .xslx, or .xls")
 
+
 def pd_read_file(fpath: str, sheet_name: str) -> pd.DataFrame:
     cbasename = os.path.basename(fpath).lower()
 
@@ -30,11 +31,12 @@ def pd_read_file(fpath: str, sheet_name: str) -> pd.DataFrame:
 
 def main():
     cur_dir = os.getcwd()
-    load_dotenv(cur_dir)
+    load_dotenv(os.path.join(cur_dir, ".pdappend"))
     sheet_name = os.getenv("SHEET_NAME") or None
+    print(sheet_name)
     files = [_ for _ in os.listdir(cur_dir) if is_filetype(_)]
 
-    df = pd.DataFrame()    
+    df = pd.DataFrame()
     for fname in files:
         tmpdf = pd_read_file(os.path.join(cur_dir, fname), sheet_name)
         tmpdf["filename"] = fname
