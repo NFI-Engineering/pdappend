@@ -16,7 +16,7 @@ def is_filetype(fname: str) -> bool:
     else:
         logging.warning(f"file {fname} is not .csv, .xslx, or .xls")
 
-def pd_read_file(fpath: str) -> pd.DataFrame:
+def pd_read_file(fpath: str, sheet_name: str) -> pd.DataFrame:
     cbasename = os.path.basename(fpath).lower()
 
     if not is_filetype(cbasename):
@@ -36,7 +36,7 @@ def main():
 
     df = pd.DataFrame()    
     for fname in files:
-        tmpdf = pd_read_file(os.path.join(cur_dir, fname))
+        tmpdf = pd_read_file(os.path.join(cur_dir, fname), sheet_name)
         tmpdf["filename"] = fname
 
         df = df.append(tmpdf, sort=False)
