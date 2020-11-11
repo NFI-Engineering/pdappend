@@ -1,24 +1,27 @@
 from setuptools import setup, find_packages
-from package import __version__
+from pdappend import __version__
 
 
-long_description = ''
-with open('./README.md') as f:
+long_description = ""
+with open("./README.md") as f:
     long_description = f.read()
 
 install_requires = []
-with open('./requirements.txt') as f:
+with open("./requirements.txt") as f:
     install_requires = f.read().splitlines()
 
-setup(name='package',
+setup(
+    name="pdappend",
     version=__version__,
-    description='',
+    description="CLI package to append csv, xlsx, xls files. ",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url='',
-    author='',
-    author_email='',
-    license='PUBLIC',
+    url="https://github.com/NFI-Engineering/pdappend",
+    author="Chris Pryer",
+    author_email="chris.pryer@nfiindustries.com",
+    license="PUBLIC",
     packages=find_packages(),
     install_requires=install_requires,
-    zip_safe=False)
+    entry_points={"console_scripts": ["pdappend = pdappend.cli:main"]},
+    zip_safe=False,
+)
