@@ -33,7 +33,8 @@ def main():
     cur_dir = os.getcwd()
     load_dotenv(os.path.join(cur_dir, ".pdappend"))
     sheet_name = os.getenv("SHEET_NAME") or None
-    print(sheet_name)
+    logging.debug(f".pdappend SHEET_NAME: {sheet_name}")
+
     files = [_ for _ in os.listdir(cur_dir) if is_filetype(_)]
 
     df = pd.DataFrame()

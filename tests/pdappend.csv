@@ -1,17 +1,5 @@
-c1,c2,c3,filename,Unnamed: 0
-1,2,3,f1.csv,
-1,2,3,f2.csv,
-1,2,3,f3.csv,
-1,2,3,f4.csv,
-1,2,3,pdappend.csv,
-1,2,3,pdappend.csv,
-1,2,3,pdappend.csv,
-1,2,3,pdappend.csv,
-1,2,3,pdappend.csv,
-1,2,3,pdappend.csv,
-1,2,3,pdappend.csv,
-1,2,3,pdappend.csv,
-1,2,3,pdappend.csv,0.0
-1,2,3,pdappend.csv,0.0
-1,2,3,pdappend.csv,0.0
-1,2,3,pdappend.csv,0.0
+c1,c2,c3,filename
+1,2,3,f1.csv
+1,2,3,f2.csv
+1,2,3,f3.csv
+1,2,3,f4.csv
