@@ -18,3 +18,13 @@ Before running `pdappend` add a `.pdappend` file to the directory you'd like to 
 SHEET_NAME=Sheet Name
 HEADER_ROW=1 # starts at 0, to skip first row use HEADER_ROW=1
 ```
+
+### `pdappend-gui`
+
+`pdappend-gui` comes packaged with `pdappend`. Run `pdappend-gui` at the command line to select a directory manually.
+
+
+### More cli args
+
+- `--sheet-name`: string
+- `--header-row`: integer
