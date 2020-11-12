@@ -50,11 +50,11 @@ def pd_read_file(
 
 
 def init_argparser(cwd: str) -> ArgumentParser:
-    def realtive_path_to_absolute(relpath: str) -> str:
+    def relative_path_to_absolute(relpath: str) -> str:
         return os.path.normpath(os.path.join(cwd, relpath))
 
     parser = ArgumentParser()
-    parser.add_argument("dir", nargs="?", type=realtive_path_to_absolute, default=cwd)
+    parser.add_argument("dir", nargs="?", type=relative_path_to_absolute, default=cwd)
     parser.add_argument("--to-excel", action="store_true")
     parser.add_argument("--keep-row-index", action="store_true")
     parser.add_argument("--sheet-name", type=str)
@@ -76,7 +76,7 @@ def save_df(df: pd.DataFrame, dir: str) -> None:
 
 def main(args: list = None):
     cwd = os.getcwd()
-    
+
     if not args:
         args = init_argparser(cwd).parse_args()
 
