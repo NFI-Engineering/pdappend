@@ -1,9 +1,10 @@
+import pdappend
 import pandas as pd
 import os
 from . import test_dir
 
 
-def test_this_dir():
+def test_this_dir_cli():
 
     # cd to tests/
     os.chdir(test_dir)
@@ -12,7 +13,7 @@ def test_this_dir():
     os.system("rm pdappend.csv")
 
     # run pdappend
-    os.system("pdappend")
+    os.system("pdappend .")
 
     rfpath = os.path.join(test_dir, "pdappend.csv")
 

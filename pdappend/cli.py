@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import logging
 from dotenv import load_dotenv
+from argparse import ArgumentParser
 
 
 def is_filetype(fname: str) -> bool:
@@ -33,6 +34,9 @@ def pd_read_file(
     cbasename = os.path.basename(fpath).lower()
     skiprows = []
 
+    if cbasename == "pdappend.csv":
+        return pd.DataFrame()
+
     if header_index:
         skiprows = list(range(0, int(header_index)))
 
@@ -45,20 +49,47 @@ def pd_read_file(
         return pd.read_csv(fpath, skiprows=skiprows)
 
 
-def main():
-    cur_dir = os.getcwd()
-    load_dotenv(os.path.join(cur_dir, ".pdappend"))
-    sheet_name = os.getenv("SHEET_NAME") or None
-    header_index = os.getenv("HEADER_ROW") or None
-    logging.debug(f".pdappend SHEET_NAME: {sheet_name}")
+def init_argparser(cwd: str) -> ArgumentParser:
+    def realtive_path_to_absolute(relpath: str) -> str:
+        return os.path.normpath(os.path.join(cwd, relpath))
 
-    files = [_ for _ in os.listdir(cur_dir) if is_filetype(_)]
+    parser = ArgumentParser()
+    parser.add_argument("dir", nargs="?", type=realtive_path_to_absolute, default=cwd)
+    parser.add_argument("--to-excel", action="store_true")
+    parser.add_argument("--keep-row-index", action="store_true")
+    parser.add_argument("--sheet-name", type=str)
+    parser.add_argument("--header-row", type=int)
+    parser.add_argument("--no-filenames", action="store_true")
+    parser.add_argument("--only-common", action="store_true")
 
+    return parser
+
+
+def save_df(df: pd.DataFrame, dir: str) -> None:
+    rpath = os.path.join(dir, "pdappend.csv")
+
+    if os.path.exists(rpath):
+        os.remove(rpath)
+
+    df.to_csv(rpath, index=False)
+
+
+def main(args: list = None):
+    cwd = os.getcwd()
+    args = init_argparser(cwd).parse_args()
+    load_dotenv(os.path.join(args.dir, ".pdappend"))
+
+    # load
+    files = [_ for _ in os.listdir(args.dir) if is_filetype(_)]
+    sheet_name = os.getenv("SHEET_NAME") or args.sheet_name
+    header_index = os.getenv("HEADER_ROW") or args.header_row
+
+    # append
     df = pd.DataFrame()
     for fname in files:
-        tmpdf = pd_read_file(os.path.join(cur_dir, fname), sheet_name, header_index)
+        tmpdf = pd_read_file(os.path.join(args.dir, fname), sheet_name, header_index)
         tmpdf["filename"] = fname
 
         df = df.append(tmpdf, sort=False)
 
-    df.to_csv(os.path.join(cur_dir, "pdappend.csv"), index=False)
+    save_df(df=df, dir=args.dir)
