@@ -22,6 +22,11 @@ setup(
     license="PUBLIC",
     packages=find_packages(),
     install_requires=install_requires,
-    entry_points={"console_scripts": ["pdappend = pdappend.cli:main"]},
+    entry_points={
+        "console_scripts": [
+            "pdappend = pdappend.cli:main",
+            "pdappend-gui = pdappend.gui:main",
+        ]
+    },
     zip_safe=False,
 )

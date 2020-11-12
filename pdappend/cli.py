@@ -75,8 +75,11 @@ def save_df(df: pd.DataFrame, dir: str) -> None:
 
 
 def main(args: list = None):
+
     cwd = os.getcwd()
-    args = init_argparser(cwd).parse_args()
+    if not args:
+        args = init_argparser(cwd).parse_args()
+
     load_dotenv(os.path.join(args.dir, ".pdappend"))
 
     # load
