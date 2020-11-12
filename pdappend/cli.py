@@ -17,7 +17,9 @@ def is_filetype(fname: str) -> bool:
         logging.warning(f"file {fname} is not .csv, .xslx, or .xls")
 
 
-def pd_read_file(fpath: str, sheet_name: str=None, header_index: int=None) -> pd.DataFrame:
+def pd_read_file(
+    fpath: str, sheet_name: str = None, header_index: int = None
+) -> pd.DataFrame:
     """
     Read .csv, .xlsx, .xls to pandas dataframe. Read only a certain sheet name and skip
     to header row using sheet_name and header_index.
