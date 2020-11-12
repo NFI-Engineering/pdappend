@@ -10,12 +10,16 @@ def is_filetype(fname: str) -> bool:
 
     if cfname.endswith(".csv"):
         return True
+
     elif cfname.endswith(".xlsx"):
         return True
+        
     elif cfname.endswith(".xls"):
         return True
-    else:
-        logging.warning(f"file {fname} is not .csv, .xslx, or .xls")
+    
+    logging.warning(f"file {fname} is not .csv, .xslx, or .xls")
+        
+    return False
 
 
 def pd_read_file(
