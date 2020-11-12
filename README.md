@@ -1,3 +1,4 @@
+[![PyPI Latest Release](https://img.shields.io/pypi/v/pdappend)](https://pypi.org/project/pdappend/)
 ![Python package](https://github.com/chrispryer/pdappend/workflows/Python%20package/badge.svg)
 
 # pdappend
