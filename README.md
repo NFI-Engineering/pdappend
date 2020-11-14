@@ -1,5 +1,6 @@
 [![PyPI Latest Release](https://img.shields.io/pypi/v/pdappend)](https://pypi.org/project/pdappend/)
 ![Python package](https://github.com/chrispryer/pdappend/workflows/Python%20package/badge.svg)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 # pdappend
 
