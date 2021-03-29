@@ -13,11 +13,11 @@ Run `pdappend` from the command line to append csv, xlsx, and xls files.
 
 ## Using `pdappend`
 
-Append specific files:
+Append specific files
 
 `pdappend file1.csv file2.csv file3.csv`
 
-Append specific file types in your directory:
+Append specific file types in your directory
 
 `pdappend *.csv`
 
