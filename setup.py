@@ -13,14 +13,15 @@ with open("./requirements.txt") as f:
 setup(
     name="pdappend",
     version=__version__,
-    description="CLI package to append csv, xlsx, and xls files.",
+    description="Append csv, xlsx, and xls files.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/chrispryer/pdappend",
-    author="Chris Pryer",
-    author_email="christophpryer@gmail.com",
+    url="https://github.com/cnpls/pdappend",
+    author="Chris",
+    author_email="andromia.software@gmail.com",
     license="MIT",
     packages=find_packages(),
+    python_requires='>3.6',
     install_requires=install_requires,
     entry_points={
         "console_scripts": [

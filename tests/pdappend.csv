@@ -1,5 +1,5 @@
-c1,c2,c3,filename,c4
-1,2,3,f1.csv,
-1,2,3,f2.csv,
-1,2,3,f3.csv,4.0
-1,2,3,f4.xlsx,
+c1,c2,c3,filename
+1,2,3,f2.csv
+1,2,3,f1.csv
+1,2,3,f3.xls
+1,2,3,f4.xls

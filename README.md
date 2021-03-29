@@ -1,32 +1,43 @@
 [![PyPI Latest Release](https://img.shields.io/pypi/v/pdappend)](https://pypi.org/project/pdappend/)
 ![Python package](https://github.com/cnpls/pdappend/workflows/Python%20package/badge.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+![pdappend](https://img.shields.io/pypi/pyversions/pdappend?color=blue)
 
 # pdappend
 
-Run `pdappend` in a directory to append together csv, xlsx, and xls files.
+Run `pdappend` from the command line to append csv, xlsx, and xls files. 
 
-## Instructions
+## Installation
 
-1. `pip install pdappend`
-2. From inside the directory you'd like to append files together `pdappend`
+`pip install pdappend`
 
-### For specific sheets in Excel files
+## Using `pdappend`
 
-Before running `pdappend` add a `.pdappend` file to the directory you'd like to run it in. Configre the `.pdappend` with the sheet name you want to process and rows or columns you'd like to skip:
+`pdappend file1.csv file2.csv file3.csv` or `pdappend *.csv` to append all `.csv` files in the current directory. `pdappend .` will search for all compatible file types and append them.
 
-`.pdappend`
+## Supported file types
+
+- csv
+- xls
+- xlsx: [Not supported in environments Python 3.6](https://groups.google.com/g/python-excel/c/IRa8IWq_4zk/m/Af8-hrRnAgAJ?pli=1) (downgrade to `xlrd 1.2.0` or convert to `.xls`)
+
+## For specific sheets in Excel files
+
+### Using the command line
+
+Use the flag `--sheet-name` to add a specific sheet name. For example: `pdappend *.xls --sheet-name="Sheet Name"`.
+
+### Using `.pdappend` files
+
+In the current working directory add a `.pdappend` file containing:
 ```.env
 SHEET_NAME=Sheet Name
-HEADER_ROW=1 # starts at 0, to skip first row use HEADER_ROW=1
 ```
 
-### `pdappend-gui`
+## `pdappend-gui`
 
-`pdappend-gui` comes packaged with `pdappend`. Run `pdappend-gui` at the command line to select a directory manually.
+Run `pdappend-gui` at the command line to select files manually. You use the same flags and `.pdappend` configs for this method as well.
 
+## Header row configuration
 
-### More cli args
-
-- `--sheet-name`: string
-- `--header-row`: integer
+If the first row of your Excel sheet is not the column row use the `--header-row` flag or `HEADER_ROW` in the `.pdappend` to add the column row number. The default header row is 0.

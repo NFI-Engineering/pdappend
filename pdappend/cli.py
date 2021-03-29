@@ -3,163 +3,258 @@ import os
 import logging
 from dotenv import load_dotenv
 from argparse import ArgumentParser
-from collections import namedtuple
+from typing import List, Optional, Union
 
-Args = namedtuple("args", ["dir", "sheet_name", "header_row"])
+from pdappend import pdappend, dtypes, utils
 
 
-def is_filetype(filename: str) -> bool:
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-8s %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+
+DEFAULT_TARGETS = dtypes.Targets(values=".")
+DEFAULT_ARGS = dtypes.Args(targets=DEFAULT_TARGETS, flags=pdappend.DEFAULT_CONFIG)
+
+
+def update_targets(
+    targets0: dtypes.Targets, targets1: dtypes.Targets
+) -> dtypes.Targets:
     """
-    Return true if fname is ends with .csv, .xlsx, or .xls.
-    Otherwise return False.
+    Override default values from targets1 -> targets0 and return dtypes.Targets to use.
 
-    :filename:      filename string
+    :targets0:    dtypes.Targets to override
+    :targets1:    dtypes.Targets to override targets0 with
 
-    Returns bool
+    Returns dtypes.Targets
     """
-    cfname = filename.lower()
+    if targets0 == DEFAULT_TARGETS and targets1 != DEFAULT_TARGETS:
+        return targets1
 
-    if cfname.endswith(".csv"):
-        return True
+    if targets0 != DEFAULT_TARGETS and targets1 == DEFAULT_TARGETS:
+        return targets0
 
-    elif cfname.endswith(".xlsx"):
-        return True
+    values = targets0.values
 
-    elif cfname.endswith(".xls"):
-        return True
+    # redundant without more Targets properties
+    if targets0.values == DEFAULT_TARGETS.values:
+        values = targets1.values
 
-    logging.warning(f"file {filename} is not .csv, .xslx, or .xls")
+    targets = dtypes.Targets(values)
 
-    return False
+    return targets
 
 
-def pd_read_file(
-    fpath: str, sheet_name: str = None, header_index: int = None
-) -> pd.DataFrame:
+def update_flags(flags0: dtypes.Config, flags1: dtypes.Config) -> dtypes.Config:
     """
-    Read .csv, .xlsx, .xls to pandas dataframe. Read only a certain sheet name and skip
-    to header row using sheet_name and header_index.
+    Override default values from flags1 -> flags0 and return dtypes.Config to use.
 
-    :fpath:         path to file (str)
-    :sheet_name:    sheet name to parse (str)
-    :header_index:  index corresponding to header row of file (int)
+    :flags0:    dtypes.Flags to override
+    :flags1:    dtypes.Flags to override flags0 with
 
-    Returns DataFrame
+    Returns dtypes.Config
     """
-    cbasename = os.path.basename(fpath).lower()
-    skiprows = []
+    if flags0 == pdappend.DEFAULT_CONFIG and flags1 != pdappend.DEFAULT_CONFIG:
+        return flags1
 
-    if cbasename == "pdappend.csv":
-        return pd.DataFrame()
+    if flags0 != pdappend.DEFAULT_CONFIG and flags1 == pdappend.DEFAULT_CONFIG:
+        return flags0
 
-    if header_index:
-        skiprows = list(range(0, int(header_index)))
+    sheet_name = flags0.sheet_name
+    header_row = flags0.header_row
+    excel_header_row = flags0.excel_header_row
+    csv_header_row = flags0.csv_header_row
+    save_as = flags0.save_as
 
-    if not is_filetype(cbasename):
-        raise ValueError(f"file {cbasename} is not .csv, .xslx, or .xls")
+    if flags0.sheet_name == pdappend.DEFAULT_CONFIG.sheet_name:
+        sheet_name = flags1.sheet_name
 
-    if ".xls" in cbasename:
-        return pd.read_excel(fpath, sheet_name=sheet_name, skiprows=skiprows)
-    elif ".csv" in cbasename:
-        return pd.read_csv(fpath, skiprows=skiprows)
+    if flags0.header_row == pdappend.DEFAULT_CONFIG.header_row:
+        header_row = flags1.header_row
+
+    if flags0.excel_header_row == pdappend.DEFAULT_CONFIG.excel_header_row:
+        excel_header_row = flags1.excel_header_row
+
+    if flags0.csv_header_row == pdappend.DEFAULT_CONFIG.csv_header_row:
+        csv_header_row = flags1.csv_header_row
+
+    if flags0.save_as == pdappend.DEFAULT_CONFIG.save_as:
+        save_as = flags1.save_as
+
+    flags = dtypes.Config(
+        sheet_name, header_row, excel_header_row, csv_header_row, save_as
+    )
+
+    return flags
 
 
-def init_argparser(cwd: str) -> ArgumentParser:
+def update_args(args0: dtypes.Args, args1: dtypes.Args) -> dtypes.Args:
     """
-    Returns argparse.ArgumentParser with the following arguments:
-    ~dir~:            relative filepath i.e. pdappend dir
-    ~--sheet-name~:   string of excel sheet name i.e. "Sheet1"
-    ~--header-row~:   integer of header row index (0 for first, 1 for second)
+    Override default values from args1 -> args0 and return dtypes.Args to use.
 
-    :cwd:             current working dir string
+    :args0:    dtypes.Args to override
+    :args1:    dtypes.Args to override args0 with
+
+    Returns dtypes.Args
+    """
+    if args0 == DEFAULT_ARGS and args1 != DEFAULT_ARGS:
+        return args1
+
+    if args0 != DEFAULT_ARGS and args1 == DEFAULT_ARGS:
+        return args0
+
+    targets = update_targets(targets0=args0.targets, targets1=args1.targets)
+    flags = update_flags(flags0=args0.flags, flags1=args1.flags)
+
+    return dtypes.Args(targets, flags)
+
+
+def init_pdappend_file() -> dtypes.Args:
+    cwd = os.getcwd()
+    load_dotenv(os.path.join(cwd, ".pdappend"))
+
+    targets = DEFAULT_TARGETS
+    config = dtypes.Config(
+        sheet_name=utils._or(
+            os.getenv("SHEET_NAME"), pdappend.DEFAULT_CONFIG.sheet_name
+        ),
+        header_row=utils._or(
+            os.getenv("HEADER_ROW"), pdappend.DEFAULT_CONFIG.header_row
+        ),
+        excel_header_row=utils._or(
+            os.getenv("EXCEL_HEADER_ROW"), pdappend.DEFAULT_CONFIG.excel_header_row
+        ),
+        csv_header_row=utils._or(
+            os.getenv("CSV_HEADER_ROW"), pdappend.DEFAULT_CONFIG.csv_header_row
+        ),
+        save_as=utils._or(os.getenv("SAVE_AS"), pdappend.DEFAULT_CONFIG.save_as),
+    )
+
+    args = dtypes.Args(targets, flags=config)
+
+    return args
+
+
+def init_argparser() -> ArgumentParser:
+    """
+    Returns argparse.ArgumentParser with dtype.Args childrens' props in namespace
 
     Returns argparse.ArgumentParser
     """
+    cwd = os.getcwd()
 
-    def relative_path_to_absolute(relpath: str) -> str:
-        return os.path.normpath(os.path.join(cwd, relpath))
+    def wildcard_to_filepaths(value: str) -> str:
+        filepaths = [
+            os.path.join(cwd, _)
+            for _ in os.listdir(cwd)
+            if _.endswith(value.replace("*", "")) and pdappend.is_filetype(_)
+        ]
+
+        return filepaths
+
+    def target_to_filepath(target: str) -> Optional[Union[str, List[str]]]:
+        if target == ".":
+            filepaths = [
+                os.path.join(cwd, _) for _ in os.listdir(cwd) if pdappend.is_filetype(_)
+            ]
+
+            return filepaths
+
+        ctarrget = target.lower().strip()
+
+        if (
+            os.path.basename(ctarrget).replace("*", "").replace(".", "")
+            in dtypes.FILETYPES
+        ):
+            return wildcard_to_filepaths(target)
+
+        filepath = os.path.normpath(os.path.join(cwd, target))
+
+        return filepath
+
+    def parse_save_as(string: str) -> str:
+        cstring = string.lower().strip()
+
+        if cstring not in dtypes.FILETYPES + ["excel"]:
+            raise (
+                ValueError(
+                    f"save-as configuration ({string}) is not a recognized result file type"
+                )
+            )
+
+        if cstring == "excel":
+            return "xlsx"
+
+        return cstring
 
     parser = ArgumentParser()
-    parser.add_argument("dir", nargs="?", type=relative_path_to_absolute, default=cwd)
-    # parser.add_argument("--to-excel", action="store_true")
-    # parser.add_argument("--keep-row-index", action="store_true")
-    parser.add_argument("--sheet-name", type=str)
-    parser.add_argument("--header-row", type=int)
-    # parser.add_argument("--no-filenames", action="store_true")
-    # parser.add_argument("--only-common", action="store_true")
+    parser.add_argument("targets", nargs="*", type=target_to_filepath, default=".")
+    parser.add_argument(
+        "--sheet-name", type=str, default=pdappend.DEFAULT_CONFIG.sheet_name
+    )
+    parser.add_argument(
+        "--header-row", type=int, default=pdappend.DEFAULT_CONFIG.header_row
+    )
+    parser.add_argument(
+        "--excel-header-row", type=int, default=pdappend.DEFAULT_CONFIG.excel_header_row
+    )
+    parser.add_argument(
+        "--csv-header-row", type=int, default=pdappend.DEFAULT_CONFIG.csv_header_row
+    )
+    parser.add_argument(
+        "--save-as", type=parse_save_as, default=pdappend.DEFAULT_CONFIG.save_as
+    )
 
     return parser
 
 
-def save_df(df: pd.DataFrame, _dir: str) -> None:
+def init_cli() -> dtypes.Args:
     """
-    Saves pandas dataframe as pdappend.csv in a directory.
-
-    :df:     pandas dataframe of data
-    :dir:    string of full path to directory
-    """
-    fiilepath = os.path.join(_dir, "pdappend.csv")
-
-    if os.path.exists(fiilepath):
-        os.remove(fiilepath)
-
-    df.to_csv(fiilepath, index=False)
-
-
-def init_cli() -> Args:  # TODO: better return typing
-    """
-    Return commands from current working directory
+    Return dtypes.Args using prioritized commands and secondary .pdappend
 
     Returns Args
     """
-    cwd = os.getcwd()
-    cmd = init_argparser(cwd).parse_args()
-
-    return cmd
-
-
-def update_args_with_cli(args: Args, cli: Args) -> Args:
-    """
-    Updates args where a required field is not given using
-    commands from cli. This prioritizes external args over cli.
-
-    :args:      Args of dir, sheet_name, header_row
-    :cli:       Args of dir, sheet_name, header_row
-
-    Returns Args
-    """
-    if not args and cli:
-        return cli
-
-    if not cli and args:
-        return args
-
-    return Args(
-        dir=args.dir or cli.dir or None,
-        sheet_name=args.sheet_name or cli.sheet_name or None,
-        header_row=args.header_row or cli.header_row or None,
+    pdappend_file_args = init_pdappend_file()
+    parsed_args = init_argparser().parse_args()
+    command_args = dtypes.Args(
+        targets=dtypes.Targets(values=parsed_args.targets),
+        flags=dtypes.Config(
+            sheet_name=parsed_args.sheet_name,
+            header_row=parsed_args.header_row,
+            excel_header_row=parsed_args.excel_header_row,
+            csv_header_row=parsed_args.csv_header_row,
+            save_as=parsed_args.save_as,
+        ),
     )
 
+    args = update_args(args0=pdappend_file_args, args1=command_args)
 
-def main(args: Args = None):
+    return args
 
-    # pull commands from cli
-    cmd = init_cli()
-    args = update_args_with_cli(args, cli=cmd)
 
-    load_dotenv(os.path.join(args.dir, ".pdappend"))
+def unpack_processed_targets(targets: List[str]) -> List[str]:
+    unpacked_targets = [_ for _ in targets]
 
-    # load
-    files = [_ for _ in os.listdir(args.dir) if is_filetype(_)]
-    sheet_name = os.getenv("SHEET_NAME") or args.sheet_name
-    header_index = os.getenv("HEADER_ROW") or args.header_row
+    return unpacked_targets
 
-    # append
-    df = pd.DataFrame()
-    for fname in files:
-        tmpdf = pd_read_file(os.path.join(args.dir, fname), sheet_name, header_index)
-        tmpdf["filename"] = fname
 
-        df = df.append(tmpdf, sort=False)
+def main(external_args: dtypes.Args = DEFAULT_ARGS):
+    initialized_args = init_cli()
 
-    save_df(df, _dir=args.dir)
+    # override any default configuration from arg1 -> arg0
+    args = update_args(args0=initialized_args, args1=external_args)
+
+    logging.info(f"pdappend setup {str(args)}")
+
+    files = []
+    for _ in args.targets.values:
+        if isinstance(_, list):
+            files += unpack_processed_targets(_)
+        else:
+            files.append(_)
+
+    files = list(set(files))
+    df = pdappend.append(files, config=args.flags)
+    pdappend.save_result(df, save_as=args.flags.save_as)
