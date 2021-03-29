@@ -38,6 +38,8 @@ def test_append_all():
         result.shape[1] - 1 == f1.shape[1] == f2.shape[1] == f3.shape[1] == f4.shape[1]
     )
 
+    teardown()
+
 
 def test_append_filenames():
     init()
