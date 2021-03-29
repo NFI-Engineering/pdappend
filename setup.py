@@ -5,7 +5,7 @@ from pdappend import __version__
 CLASSIFIERS = """\
 Intended Audience :: Science/Research
 Intended Audience :: Developers
-License :: MIT License
+License :: OSI Approved :: MIT License
 Programming Language :: Python
 Programming Language :: Python :: 3
 Programming Language :: Python :: 3.6
@@ -13,7 +13,7 @@ Programming Language :: Python :: 3.7
 Programming Language :: Python :: 3.8
 Programming Language :: Python :: 3.9
 Topic :: Software Development
-Operating System :: Windows
+Operating System :: Microsoft :: Windows
 Operating System :: Unix
 Operating System :: MacOS
 
