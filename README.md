@@ -13,7 +13,17 @@ Run `pdappend` from the command line to append csv, xlsx, and xls files.
 
 ## Using `pdappend`
 
-`pdappend file1.csv file2.csv file3.csv` or `pdappend *.csv` to append all `.csv` files in the current directory. `pdappend .` will search for all compatible file types and append them.
+Append specific files:
+
+`pdappend file1.csv file2.csv file3.csv`
+
+Append specific file types in your directory:
+
+`pdappend *.csv`
+
+Append all `pdappend`-compatible files in your directory
+
+`pdappend .`
 
 ## Supported file types
 
@@ -25,7 +35,9 @@ Run `pdappend` from the command line to append csv, xlsx, and xls files.
 
 ### Using the command line
 
-Use the flag `--sheet-name` to add a specific sheet name. For example: `pdappend *.xls --sheet-name="Sheet Name"`.
+Use the flag `--sheet-name` to add a specific sheet name.
+
+`pdappend *.xls --sheet-name="Sheet Name"`
 
 ### Using `.pdappend` files
 
@@ -36,8 +48,16 @@ SHEET_NAME=Sheet Name
 
 ## `pdappend-gui`
 
-Run `pdappend-gui` at the command line to select files manually. You use the same flags and `.pdappend` configs for this method as well.
+Run `pdappend-gui` at the command line to select files manually. You can use the same flags or `.pdappend` config for this method as well.
 
 ## Header row configuration
 
-If the first row of your Excel sheet is not the column row use the `--header-row` flag or `HEADER_ROW` in the `.pdappend` to add the column row number. The default header row is 0.
+If the first row of your file is not the column row use the `--header-row` flag or `HEADER_ROW` in the `.pdappend` to add the column row number. The default header row is 0.
+
+## Documentation
+
+See the [wiki](https://github.com/cnpls/pdappend/wiki) for more on `pdappend`.
+
+## Contributing
+
+Pull requests are welcome!
