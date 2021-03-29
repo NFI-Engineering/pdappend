@@ -21,6 +21,7 @@ def write_pdappend_file():
     with open(filepath, "w") as f:
         f.write(f"SHEET_NAME=Sheet1\nHEADER_ROW=1\nCSV_HEADER_ROW=0")
 
+
 def teardown():
     os.system("rm .pdappend pdappend.csv")
 
