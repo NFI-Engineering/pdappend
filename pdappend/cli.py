@@ -137,6 +137,16 @@ def init_pdappend_file() -> dtypes.Args:
     return args
 
 
+def create_pdappend_file() -> None:
+    string = pdappend.DEFAULT_CONFIG.as_config_file()
+    filepath = os.path.join(os.getcwd(), ".pdappend")
+
+    with open(filepath, "w") as f:
+        f.write(string)
+
+    logging.info(f".pdappend file saved to {os.path.dirname(filepath)}")
+
+
 def init_argparser() -> ArgumentParser:
     """
     Returns argparse.ArgumentParser with dtype.Args childrens' props in namespace
@@ -155,6 +165,9 @@ def init_argparser() -> ArgumentParser:
         return filepaths
 
     def target_to_filepath(target: str) -> Optional[Union[str, List[str]]]:
+        if target == "setup":
+            return target
+
         if target == ".":
             filepaths = [
                 os.path.join(cwd, _) for _ in os.listdir(cwd) if pdappend.is_filetype(_)
@@ -245,6 +258,11 @@ def main(external_args: dtypes.Args = DEFAULT_ARGS):
 
     # override any default configuration from arg1 -> arg0
     args = update_args(args0=initialized_args, args1=external_args)
+
+    if args.targets.values == ["setup"] or args.targets.values == "setup":
+        create_pdappend_file()
+
+        return
 
     logging.info(f"pdappend setup {str(args)}")
 

@@ -1,5 +1,7 @@
 from typing import NamedTuple, Union, Optional, List
 
+from pdappend import utils
+
 
 FILETYPES = ["csv", "xls", "xlsx"]
 
@@ -26,6 +28,17 @@ class Config(NamedTuple):
                 f"excel_header_row: {self.excel_header_row}",
                 f"csv_header_row: {self.csv_header_row}",
                 f"save_as: {self.save_as}",
+            ]
+        )
+
+    def as_config_file(self) -> str:
+        return "\n".join(
+            [
+                f"SHEET_NAME={self.sheet_name}",
+                f"HEADER_ROW={self.header_row}",
+                f"EXCEL_HEADER_ROW={utils._or(self.excel_header_row, '')}",
+                f"CSV_HEADER_ROW={utils._or(self.csv_header_row, '')}",
+                f"SAVE_AS={self.save_as}",
             ]
         )
 
