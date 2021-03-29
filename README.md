@@ -19,7 +19,7 @@ Run `pdappend` from the command line to append csv, xlsx, and xls files.
 
 - csv
 - xls
-- xlsx: [Not supported in environments Python 3.6](https://groups.google.com/g/python-excel/c/IRa8IWq_4zk/m/Af8-hrRnAgAJ?pli=1) (downgrade to `xlrd 1.2.0` or convert to `.xls`)
+- xlsx: [Not supported in Python 3.6 environments](https://groups.google.com/g/python-excel/c/IRa8IWq_4zk/m/Af8-hrRnAgAJ?pli=1) (downgrade to `xlrd 1.2.0` or convert to `.xls`)
 
 ## For specific sheets in Excel files
 
