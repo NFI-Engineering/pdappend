@@ -21,6 +21,9 @@ def write_pdappend_file():
     with open(filepath, "w") as f:
         f.write(f"SHEET_NAME=Sheet1\nHEADER_ROW=1\nCSV_HEADER_ROW=0")
 
+def teardown():
+    os.system("rm .pdappend pdappend.csv")
+
 
 def test_append_all():
     init()
@@ -47,6 +50,8 @@ def test_append_filenames():
 
     assert result.shape[1] - 1 == f1.shape[1] == f4.shape[1]
 
+    teardown()
+
 
 def test_append_wildcard():
     init()
@@ -60,6 +65,8 @@ def test_append_wildcard():
     assert (
         result.shape[1] - 1 == f1.shape[1] == f2.shape[1] == f3.shape[1] == f4.shape[1]
     )
+
+    teardown()
 
 
 def test_append_with_pdappend_file():
@@ -76,7 +83,7 @@ def test_append_with_pdappend_file():
         result.shape[1] - 1 == f1.shape[1] == f2.shape[1] == f3.shape[1] == f4.shape[1]
     )
 
-    os.system("rm .pdappend")
+    teardown()
 
 
 def test_append_with_flags():
@@ -91,3 +98,5 @@ def test_append_with_flags():
     assert (
         result.shape[1] - 1 == f1.shape[1] == f2.shape[1] == f3.shape[1] == f4.shape[1]
     )
+
+    teardown()
