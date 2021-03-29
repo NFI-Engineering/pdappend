@@ -1,5 +1,5 @@
 [![PyPI Latest Release](https://img.shields.io/pypi/v/pdappend)](https://pypi.org/project/pdappend/)
-![tests](https://github.com/cnpls/pdappend/workflows/Tests/badge.svg)
+![tests](https://github.com/cnpls/pdappend/workflows/tests/badge.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![pdappend](https://img.shields.io/pypi/pyversions/pdappend?color=blue)
 
