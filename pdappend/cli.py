@@ -1,6 +1,7 @@
 import pandas as pd
-import os
 import logging
+import os
+import sys
 from dotenv import load_dotenv
 from argparse import ArgumentParser
 from typing import List, Optional, Union
@@ -17,6 +18,15 @@ logging.basicConfig(
 
 DEFAULT_TARGETS = dtypes.Targets(values=".")
 DEFAULT_ARGS = dtypes.Args(targets=DEFAULT_TARGETS, flags=pdappend.DEFAULT_CONFIG)
+
+
+def init_logging() -> None:
+    """cli.py module logging init function"""
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        level=logging.INFO,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
 
 
 def update_targets(
@@ -67,6 +77,7 @@ def update_flags(flags0: dtypes.Config, flags1: dtypes.Config) -> dtypes.Config:
     excel_header_row = flags0.excel_header_row
     csv_header_row = flags0.csv_header_row
     save_as = flags0.save_as
+    show = flags0.show
 
     if flags0.sheet_name == pdappend.DEFAULT_CONFIG.sheet_name:
         sheet_name = flags1.sheet_name
@@ -83,8 +94,11 @@ def update_flags(flags0: dtypes.Config, flags1: dtypes.Config) -> dtypes.Config:
     if flags0.save_as == pdappend.DEFAULT_CONFIG.save_as:
         save_as = flags1.save_as
 
+    if flags0.show == pdappend.DEFAULT_CONFIG.show:
+        show = flags1.show
+
     flags = dtypes.Config(
-        sheet_name, header_row, excel_header_row, csv_header_row, save_as
+        sheet_name, header_row, excel_header_row, csv_header_row, save_as, show
     )
 
     return flags
@@ -130,6 +144,9 @@ def init_pdappend_file() -> dtypes.Args:
             os.getenv("CSV_HEADER_ROW"), pdappend.DEFAULT_CONFIG.csv_header_row
         ),
         save_as=utils._or(os.getenv("SAVE_AS"), pdappend.DEFAULT_CONFIG.save_as),
+        show=utils._or(
+            utils.str_to_bool(os.getenv("SHOW")), pdappend.DEFAULT_CONFIG.show
+        ),
     )
 
     args = dtypes.Args(targets, flags=config)
@@ -138,6 +155,7 @@ def init_pdappend_file() -> dtypes.Args:
 
 
 def create_pdappend_file() -> None:
+    """Create .pdappend file in current working directory"""
     string = pdappend.DEFAULT_CONFIG.as_config_file()
     filepath = os.path.join(os.getcwd(), ".pdappend")
 
@@ -150,8 +168,6 @@ def create_pdappend_file() -> None:
 def init_argparser() -> ArgumentParser:
     """
     Returns argparse.ArgumentParser with dtype.Args childrens' props in namespace
-
-    Returns argparse.ArgumentParser
     """
     cwd = os.getcwd()
 
@@ -202,22 +218,47 @@ def init_argparser() -> ArgumentParser:
 
         return cstring
 
-    parser = ArgumentParser()
-    parser.add_argument("targets", nargs="*", type=target_to_filepath, default=".")
+    parser = ArgumentParser(description="pdappend csv, xlsx, and xls files.")
     parser.add_argument(
-        "--sheet-name", type=str, default=pdappend.DEFAULT_CONFIG.sheet_name
+        "targets",
+        nargs="*",
+        type=target_to_filepath,
+        help="files to append ('.', 'file.csv', '*.csv')",
     )
     parser.add_argument(
-        "--header-row", type=int, default=pdappend.DEFAULT_CONFIG.header_row
+        "--sheet-name",
+        type=str,
+        default=pdappend.DEFAULT_CONFIG.sheet_name,
+        help="Sheet name in excel files (default is 'Sheet1')",
     )
     parser.add_argument(
-        "--excel-header-row", type=int, default=pdappend.DEFAULT_CONFIG.excel_header_row
+        "--header-row",
+        type=int,
+        default=pdappend.DEFAULT_CONFIG.header_row,
+        help="Row number of column row (default is 0)",
     )
     parser.add_argument(
-        "--csv-header-row", type=int, default=pdappend.DEFAULT_CONFIG.csv_header_row
+        "--excel-header-row",
+        type=int,
+        default=pdappend.DEFAULT_CONFIG.excel_header_row,
+        help="Row number of column row in excel files (default is --header-row or 0)",
     )
     parser.add_argument(
-        "--save-as", type=parse_save_as, default=pdappend.DEFAULT_CONFIG.save_as
+        "--csv-header-row",
+        type=int,
+        default=pdappend.DEFAULT_CONFIG.csv_header_row,
+        help="Row number of column row in csv files (default is --header-row or 0)",
+    )
+    parser.add_argument(
+        "--save-as",
+        type=parse_save_as,
+        default=pdappend.DEFAULT_CONFIG.save_as,
+        help="File type to save appended results as ('csv', 'xlsx', 'xls', 'excel')",
+    )
+    parser.add_argument(
+        "--show",
+        action="store_true",
+        help="Print files being appended",
     )
 
     return parser
@@ -226,8 +267,6 @@ def init_argparser() -> ArgumentParser:
 def init_cli() -> dtypes.Args:
     """
     Return dtypes.Args using prioritized commands and secondary .pdappend
-
-    Returns Args
     """
     pdappend_file_args = init_pdappend_file()
     parsed_args = init_argparser().parse_args()
@@ -239,6 +278,7 @@ def init_cli() -> dtypes.Args:
             excel_header_row=parsed_args.excel_header_row,
             csv_header_row=parsed_args.csv_header_row,
             save_as=parsed_args.save_as,
+            show=parsed_args.show,
         ),
     )
 
@@ -254,6 +294,7 @@ def unpack_processed_targets(targets: List[str]) -> List[str]:
 
 
 def main(external_args: dtypes.Args = DEFAULT_ARGS):
+    init_logging()
     initialized_args = init_cli()
 
     # override any default configuration from arg1 -> arg0
@@ -264,7 +305,30 @@ def main(external_args: dtypes.Args = DEFAULT_ARGS):
 
         return
 
-    logging.info(f"pdappend setup {str(args)}")
+    if len(sys.argv) == 1:
+        print(
+            "\n".join(
+                [
+                    "",
+                    "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+                    "~~~~~~~~~~ Welcome to pdappend! ~~~~~~~~~~~",
+                    "",
+                    "Use pdappend to append csv, xlsx, and xls files.",
+                    "If you would like to learn more about how to use "
+                    "pdappend -> https://github.com/cnpls/pdappend/wiki",
+                    "",
+                    "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+                    "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+                    "",
+                ]
+            )
+        )
+
+        os.system("pdappend --help")
+
+        return
+
+    logging.debug(f"pdappend setup {str(args)}")
 
     files = []
     for _ in args.targets.values:

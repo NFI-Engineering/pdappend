@@ -19,6 +19,7 @@ class Config(NamedTuple):
     excel_header_row: int
     csv_header_row: int
     save_as: str
+    show: bool
 
     def __str__(self) -> str:
         return ", ".join(
@@ -28,6 +29,7 @@ class Config(NamedTuple):
                 f"excel_header_row: {self.excel_header_row}",
                 f"csv_header_row: {self.csv_header_row}",
                 f"save_as: {self.save_as}",
+                f"show: {self.show}",
             ]
         )
 

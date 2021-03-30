@@ -12,6 +12,7 @@ DEFAULT_CONFIG = dtypes.Config(
     excel_header_row=None,
     csv_header_row=None,
     save_as="csv",
+    show=False,
 )
 
 
@@ -34,8 +35,6 @@ def is_filetype(filename: str) -> bool:
 
     elif cfname.endswith(".xls"):
         return True
-
-    logging.warning(f"file {filename} is not .csv, .xslx, or .xls")
 
     return False
 
@@ -74,9 +73,18 @@ def read_file(filepath: str, config: dtypes.Config = DEFAULT_CONFIG) -> pd.DataF
 
 
 def append(files: List[str], config: dtypes.Config = DEFAULT_CONFIG) -> pd.DataFrame:
+    """
+    Append files using pdappend.Config
+
+    :files:     list of filepaths to read and append together
+    :config:    pdappend.Config
+
+    Returns pd.DataFrame
+    """
     df = pd.DataFrame()
 
     for _ in files:
+        logging.info(f"Appending {_}") if config.show else None
         tmpdf = read_file(_, config)
         tmpdf["filename"] = os.path.basename(_)
 
@@ -107,4 +115,7 @@ def save_result(
 
         return
 
+    logging.info(
+        f"Saving appended data ({df.shape[0]} rows, {df.shape[1]} columns) to {filepath}"
+    )
     df.to_csv(filepath, index=False)
