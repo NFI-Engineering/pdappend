@@ -9,13 +9,6 @@ from typing import List, Optional, Union
 from pdappend import pdappend, dtypes, utils
 
 
-logging.basicConfig(
-    format="%(asctime)s %(levelname)-8s %(message)s",
-    level=logging.INFO,
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-
-
 DEFAULT_TARGETS = dtypes.Targets(values=".")
 DEFAULT_ARGS = dtypes.Args(targets=DEFAULT_TARGETS, flags=pdappend.DEFAULT_CONFIG)
 
