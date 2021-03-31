@@ -68,5 +68,5 @@ setup(
             "pdappend-gui = pdappend.gui:main",
         ]
     },
-    classifiers=[_f for _f in CLASSIFIERS.split("\n") if _f],
+    classifiers=[_ for _ in CLASSIFIERS.split("\n") if _],
 )
