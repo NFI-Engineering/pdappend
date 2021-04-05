@@ -3,6 +3,8 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![pdappend](https://img.shields.io/pypi/pyversions/pdappend?color=blue)
 
+This project is under development.
+
 # pdappend
 
 Run `pdappend` from the command line to append csv, xlsx, and xls files. 
