@@ -1,16 +1,6 @@
-from typing import NamedTuple, Union, Optional, List
+from typing import NamedTuple
 
 from pdappend import utils
-
-
-FILETYPES = ["csv", "xls", "xlsx"]
-
-
-class Targets(NamedTuple):
-    values: Optional[Union[str, List[str]]]
-
-    def __str__(self) -> str:
-        return ", ".join([f"values: {self.values}"])
 
 
 class Config(NamedTuple):
@@ -43,11 +33,3 @@ class Config(NamedTuple):
                 f"SAVE_AS={self.save_as}",
             ]
         )
-
-
-class Args(NamedTuple):
-    targets: Targets
-    flags: Config
-
-    def __str__(self) -> str:
-        return ", ".join([f"targets: {str(self.targets)}", f"flags: {str(self.flags)}"])

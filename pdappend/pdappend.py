@@ -1,12 +1,15 @@
+import os
 import pandas as pd
 import logging
-import os
-from typing import List
 
-from pdappend import dtypes, utils
+from typing import NamedTuple, Union, Optional, List
+
+from pdappend import utils
+from pdappend.config import Config
 
 
-DEFAULT_CONFIG = dtypes.Config(
+FILETYPES = ["csv", "xls", "xlsx"]
+DEFAULT_CONFIG = Config(
     sheet_name="Sheet1",
     header_row=0,
     excel_header_row=None,
@@ -14,6 +17,21 @@ DEFAULT_CONFIG = dtypes.Config(
     save_as="csv",
     show=False,
 )
+
+
+class Targets(NamedTuple):
+    values: Optional[Union[str, List[str]]]
+
+    def __str__(self) -> str:
+        return ", ".join([f"values: {self.values}"])
+
+
+class Args(NamedTuple):
+    targets: Targets
+    flags: Config
+
+    def __str__(self) -> str:
+        return ", ".join([f"targets: {str(self.targets)}", f"flags: {str(self.flags)}"])
 
 
 def is_filetype(filename: str) -> bool:
@@ -39,7 +57,7 @@ def is_filetype(filename: str) -> bool:
     return False
 
 
-def read_file(filepath: str, config: dtypes.Config = DEFAULT_CONFIG) -> pd.DataFrame:
+def read_file(filepath: str, config: Config = DEFAULT_CONFIG) -> pd.DataFrame:
     """
     Read .csv, .xlsx, .xls to pandas dataframe. Read only a certain sheet name and skip
     to header row using sheet_name and header_index.
@@ -72,7 +90,7 @@ def read_file(filepath: str, config: dtypes.Config = DEFAULT_CONFIG) -> pd.DataF
         return pd.read_csv(filepath, skiprows=list(range(0, int(csv_header_row))))
 
 
-def append(files: List[str], config: dtypes.Config = DEFAULT_CONFIG) -> pd.DataFrame:
+def append(files: List[str], config: Config = DEFAULT_CONFIG) -> pd.DataFrame:
     """
     Append files using pdappend.Config
 
@@ -102,7 +120,7 @@ def save_result(
     Saves pandas dataframe as pdappend.csv in a directory.
 
     :df:           pandas dataframe of data
-    :save_as:      dtypes.Config.save_as ("xls", "xlsx", "csv", "excel")
+    :save_as:      Config.save_as ("xls", "xlsx", "csv", "excel")
     :directory:    string of full path to directory
     """
     filepath = os.path.join(directory, f"pdappend.{save_as}")

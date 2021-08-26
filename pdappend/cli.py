@@ -1,16 +1,17 @@
-import pandas as pd
-import logging
 import os
 import sys
+import logging
+
 from dotenv import load_dotenv
 from argparse import ArgumentParser
+
 from typing import List, Optional, Union
 
-from pdappend import pdappend, dtypes, utils
+from pdappend import pdappend, utils
 
 
-DEFAULT_TARGETS = dtypes.Targets(values=".")
-DEFAULT_ARGS = dtypes.Args(targets=DEFAULT_TARGETS, flags=pdappend.DEFAULT_CONFIG)
+DEFAULT_TARGETS = pdappend.Targets(values=".")
+DEFAULT_ARGS = pdappend.Args(targets=DEFAULT_TARGETS, flags=pdappend.DEFAULT_CONFIG)
 
 
 def init_logging() -> None:
@@ -22,16 +23,16 @@ def init_logging() -> None:
     )
 
 
-def update_targets(
-    targets0: dtypes.Targets, targets1: dtypes.Targets
-) -> dtypes.Targets:
+def merge_targets(
+    targets0: pdappend.Targets, targets1: pdappend.Targets
+) -> pdappend.Targets:
     """
-    Override default values from targets1 -> targets0 and return dtypes.Targets to use.
+    Override default values from targets1 -> targets0 and return pdappend.Targets to use.
 
-    :targets0:    dtypes.Targets to override
-    :targets1:    dtypes.Targets to override targets0 with
+    :targets0:    pdappend.Targets to override
+    :targets1:    pdappend.Targets to override targets0 with
 
-    Returns dtypes.Targets
+    Returns pdappend.Targets
     """
     if targets0 == DEFAULT_TARGETS and targets1 != DEFAULT_TARGETS:
         return targets1
@@ -45,19 +46,19 @@ def update_targets(
     if targets0.values == DEFAULT_TARGETS.values:
         values = targets1.values
 
-    targets = dtypes.Targets(values)
+    targets = pdappend.Targets(values)
 
     return targets
 
 
-def update_flags(flags0: dtypes.Config, flags1: dtypes.Config) -> dtypes.Config:
+def merge_flags(flags0: pdappend.Config, flags1: pdappend.Config) -> pdappend.Config:
     """
-    Override default values from flags1 -> flags0 and return dtypes.Config to use.
+    Override default values from flags1 -> flags0 and return pdappend.Config to use.
 
-    :flags0:    dtypes.Flags to override
-    :flags1:    dtypes.Flags to override flags0 with
+    :flags0:    pdappend.Flags to override
+    :flags1:    pdappend.Flags to override flags0 with
 
-    Returns dtypes.Config
+    Returns pdappend.Config
     """
     if flags0 == pdappend.DEFAULT_CONFIG and flags1 != pdappend.DEFAULT_CONFIG:
         return flags1
@@ -90,21 +91,21 @@ def update_flags(flags0: dtypes.Config, flags1: dtypes.Config) -> dtypes.Config:
     if flags0.show == pdappend.DEFAULT_CONFIG.show:
         show = flags1.show
 
-    flags = dtypes.Config(
+    flags = pdappend.Config(
         sheet_name, header_row, excel_header_row, csv_header_row, save_as, show
     )
 
     return flags
 
 
-def update_args(args0: dtypes.Args, args1: dtypes.Args) -> dtypes.Args:
+def merge_args(args0: pdappend.Args, args1: pdappend.Args) -> pdappend.Args:
     """
-    Override default values from args1 -> args0 and return dtypes.Args to use.
+    Override default values from args1 -> args0 and return pdappend.Args to use.
 
-    :args0:    dtypes.Args to override
-    :args1:    dtypes.Args to override args0 with
+    :args0:    pdappend.Args to override
+    :args1:    pdappend.Args to override args0 with
 
-    Returns dtypes.Args
+    Returns pdappend.Args
     """
     if args0 == DEFAULT_ARGS and args1 != DEFAULT_ARGS:
         return args1
@@ -112,18 +113,16 @@ def update_args(args0: dtypes.Args, args1: dtypes.Args) -> dtypes.Args:
     if args0 != DEFAULT_ARGS and args1 == DEFAULT_ARGS:
         return args0
 
-    targets = update_targets(targets0=args0.targets, targets1=args1.targets)
-    flags = update_flags(flags0=args0.flags, flags1=args1.flags)
+    targets = merge_targets(targets0=args0.targets, targets1=args1.targets)
+    flags = merge_flags(flags0=args0.flags, flags1=args1.flags)
 
-    return dtypes.Args(targets, flags)
+    return pdappend.Args(targets, flags)
 
 
-def init_pdappend_file() -> dtypes.Args:
-    cwd = os.getcwd()
-    load_dotenv(os.path.join(cwd, ".pdappend"))
+def init_pdappend_file() -> pdappend.Args:
+    load_dotenv(".pdappend")
 
-    targets = DEFAULT_TARGETS
-    config = dtypes.Config(
+    config = pdappend.Config(
         sheet_name=utils._or(
             os.getenv("SHEET_NAME"), pdappend.DEFAULT_CONFIG.sheet_name
         ),
@@ -142,7 +141,7 @@ def init_pdappend_file() -> dtypes.Args:
         ),
     )
 
-    args = dtypes.Args(targets, flags=config)
+    args = pdappend.Args(targets=DEFAULT_TARGETS, flags=config)
 
     return args
 
@@ -184,11 +183,11 @@ def init_argparser() -> ArgumentParser:
 
             return filepaths
 
-        ctarrget = target.lower().strip()
+        ctarget = target.lower().strip()
 
         if (
-            os.path.basename(ctarrget).replace("*", "").replace(".", "")
-            in dtypes.FILETYPES
+            os.path.basename(ctarget).replace("*", "").replace(".", "")
+            in pdappend.FILETYPES
         ):
             return wildcard_to_filepaths(target)
 
@@ -199,7 +198,7 @@ def init_argparser() -> ArgumentParser:
     def parse_save_as(string: str) -> str:
         cstring = string.lower().strip()
 
-        if cstring not in dtypes.FILETYPES + ["excel"]:
+        if cstring not in pdappend.FILETYPES + ["excel"]:
             raise (
                 ValueError(
                     f"save-as configuration ({string}) is not a recognized result file type"
@@ -257,15 +256,15 @@ def init_argparser() -> ArgumentParser:
     return parser
 
 
-def init_cli() -> dtypes.Args:
+def init_cli() -> pdappend.Args:
     """
-    Return dtypes.Args using prioritized commands and secondary .pdappend
+    Return pdappend.Args using prioritized commands and secondary .pdappend
     """
     pdappend_file_args = init_pdappend_file()
     parsed_args = init_argparser().parse_args()
-    command_args = dtypes.Args(
-        targets=dtypes.Targets(values=parsed_args.targets),
-        flags=dtypes.Config(
+    command_args = pdappend.Args(
+        targets=pdappend.Targets(values=parsed_args.targets),
+        flags=pdappend.Config(
             sheet_name=parsed_args.sheet_name,
             header_row=parsed_args.header_row,
             excel_header_row=parsed_args.excel_header_row,
@@ -275,7 +274,7 @@ def init_cli() -> dtypes.Args:
         ),
     )
 
-    args = update_args(args0=pdappend_file_args, args1=command_args)
+    args = merge_args(args0=pdappend_file_args, args1=command_args)
 
     return args
 
@@ -286,12 +285,12 @@ def unpack_processed_targets(targets: List[str]) -> List[str]:
     return unpacked_targets
 
 
-def main(external_args: dtypes.Args = DEFAULT_ARGS):
+def main(external_args: pdappend.Args = DEFAULT_ARGS):
     init_logging()
     initialized_args = init_cli()
 
     # override any default configuration from arg1 -> arg0
-    args = update_args(args0=initialized_args, args1=external_args)
+    args = merge_args(args0=initialized_args, args1=external_args)
 
     if args.targets.values == ["setup"] or args.targets.values == "setup":
         create_pdappend_file()
@@ -308,7 +307,7 @@ def main(external_args: dtypes.Args = DEFAULT_ARGS):
                     "",
                     "Use pdappend to append csv, xlsx, and xls files.",
                     "If you would like to learn more about how to use "
-                    "pdappend -> https://github.com/cnpls/pdappend/wiki",
+                    "pdappend -> https://github.com/cnp0/pdappend/wiki",
                     "",
                     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
                     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
