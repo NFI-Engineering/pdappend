@@ -55,7 +55,7 @@ setup(
     description="Append csv, xlsx, and xls files.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/cnpls/pdappend",
+    url="https://github.com/cnp0/pdappend",
     author="Chris Pryer",
     author_email="andromia.software@gmail.com",
     license="MIT",
