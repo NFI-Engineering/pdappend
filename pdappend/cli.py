@@ -1,313 +1,60 @@
 import os
-import sys
-import logging
+import click
 
-from dotenv import load_dotenv
-from argparse import ArgumentParser
+from typing import Tuple, List, Set, Union
 
-from typing import List, Optional, Union
+from pdappend import pdappend, constants, __version__
 
-from pdappend import pdappend, utils
 
+# https://stackoverflow.com/a/52069546
+class DefaultCommandGroup(click.Group):
+    """allow a default command for a group"""
 
-DEFAULT_TARGETS = pdappend.Targets(values=".")
-DEFAULT_ARGS = pdappend.Args(targets=DEFAULT_TARGETS, flags=pdappend.DEFAULT_CONFIG)
+    def command(self, *args, **kwargs):
+        default_command = kwargs.pop("default_command", False)
 
+        if default_command and not args:
+            kwargs["name"] = kwargs.get("name", "<>")
 
-def init_logging() -> None:
-    """cli.py module logging init function"""
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)-8s %(message)s",
-        level=logging.INFO,
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+        decorator = super(DefaultCommandGroup, self).command(*args, **kwargs)
 
+        if default_command:
 
-def merge_targets(
-    targets0: pdappend.Targets, targets1: pdappend.Targets
-) -> pdappend.Targets:
-    """
-    Override default values from targets1 -> targets0 and return pdappend.Targets to use.
+            def new_decorator(f):
+                cmd = decorator(f)
+                self.default_command = cmd.name
+                return cmd
 
-    :targets0:    pdappend.Targets to override
-    :targets1:    pdappend.Targets to override targets0 with
+            return new_decorator
 
-    Returns pdappend.Targets
-    """
-    if targets0 == DEFAULT_TARGETS and targets1 != DEFAULT_TARGETS:
-        return targets1
+        return decorator
 
-    if targets0 != DEFAULT_TARGETS and targets1 == DEFAULT_TARGETS:
-        return targets0
+    def resolve_command(self, ctx, args):
+        try:
+            # test if the command parses
+            return super(DefaultCommandGroup, self).resolve_command(ctx, args)
+        except click.UsageError:
+            # command did not parse, assume it is the default command
+            args.insert(0, self.default_command)
+            return super(DefaultCommandGroup, self).resolve_command(ctx, args)
 
-    values = targets0.values
 
-    # redundant without more Targets properties
-    if targets0.values == DEFAULT_TARGETS.values:
-        values = targets1.values
-
-    targets = pdappend.Targets(values)
-
-    return targets
-
-
-def merge_flags(flags0: pdappend.Config, flags1: pdappend.Config) -> pdappend.Config:
-    """
-    Override default values from flags1 -> flags0 and return pdappend.Config to use.
-
-    :flags0:    pdappend.Flags to override
-    :flags1:    pdappend.Flags to override flags0 with
-
-    Returns pdappend.Config
-    """
-    if flags0 == pdappend.DEFAULT_CONFIG and flags1 != pdappend.DEFAULT_CONFIG:
-        return flags1
-
-    if flags0 != pdappend.DEFAULT_CONFIG and flags1 == pdappend.DEFAULT_CONFIG:
-        return flags0
-
-    sheet_name = flags0.sheet_name
-    header_row = flags0.header_row
-    excel_header_row = flags0.excel_header_row
-    csv_header_row = flags0.csv_header_row
-    save_as = flags0.save_as
-    show = flags0.show
-
-    if flags0.sheet_name == pdappend.DEFAULT_CONFIG.sheet_name:
-        sheet_name = flags1.sheet_name
-
-    if flags0.header_row == pdappend.DEFAULT_CONFIG.header_row:
-        header_row = flags1.header_row
-
-    if flags0.excel_header_row == pdappend.DEFAULT_CONFIG.excel_header_row:
-        excel_header_row = flags1.excel_header_row
-
-    if flags0.csv_header_row == pdappend.DEFAULT_CONFIG.csv_header_row:
-        csv_header_row = flags1.csv_header_row
-
-    if flags0.save_as == pdappend.DEFAULT_CONFIG.save_as:
-        save_as = flags1.save_as
-
-    if flags0.show == pdappend.DEFAULT_CONFIG.show:
-        show = flags1.show
-
-    flags = pdappend.Config(
-        sheet_name, header_row, excel_header_row, csv_header_row, save_as, show
-    )
-
-    return flags
-
-
-def merge_args(args0: pdappend.Args, args1: pdappend.Args) -> pdappend.Args:
-    """
-    Override default values from args1 -> args0 and return pdappend.Args to use.
-
-    :args0:    pdappend.Args to override
-    :args1:    pdappend.Args to override args0 with
-
-    Returns pdappend.Args
-    """
-    if args0 == DEFAULT_ARGS and args1 != DEFAULT_ARGS:
-        return args1
-
-    if args0 != DEFAULT_ARGS and args1 == DEFAULT_ARGS:
-        return args0
-
-    targets = merge_targets(targets0=args0.targets, targets1=args1.targets)
-    flags = merge_flags(flags0=args0.flags, flags1=args1.flags)
-
-    return pdappend.Args(targets, flags)
-
-
-def init_pdappend_file() -> pdappend.Args:
-    load_dotenv(".pdappend")
-
-    config = pdappend.Config(
-        sheet_name=utils._or(
-            os.getenv("SHEET_NAME"), pdappend.DEFAULT_CONFIG.sheet_name
-        ),
-        header_row=utils._or(
-            os.getenv("HEADER_ROW"), pdappend.DEFAULT_CONFIG.header_row
-        ),
-        excel_header_row=utils._or(
-            os.getenv("EXCEL_HEADER_ROW"), pdappend.DEFAULT_CONFIG.excel_header_row
-        ),
-        csv_header_row=utils._or(
-            os.getenv("CSV_HEADER_ROW"), pdappend.DEFAULT_CONFIG.csv_header_row
-        ),
-        save_as=utils._or(os.getenv("SAVE_AS"), pdappend.DEFAULT_CONFIG.save_as),
-        show=utils._or(
-            utils.str_to_bool(os.getenv("SHOW")), pdappend.DEFAULT_CONFIG.show
-        ),
-    )
-
-    args = pdappend.Args(targets=DEFAULT_TARGETS, flags=config)
-
-    return args
-
-
-def create_pdappend_file() -> None:
-    """Create .pdappend file in current working directory"""
-    string = pdappend.DEFAULT_CONFIG.as_config_file()
-    filepath = os.path.join(os.getcwd(), ".pdappend")
-
-    with open(filepath, "w") as f:
-        f.write(string)
-
-    logging.info(f".pdappend file saved to {os.path.dirname(filepath)}")
-
-
-def init_argparser() -> ArgumentParser:
-    """
-    Returns argparse.ArgumentParser with dtype.Args childrens' props in namespace
-    """
-    cwd = os.getcwd()
-
-    def wildcard_to_filepaths(value: str) -> str:
-        filepaths = [
-            os.path.join(cwd, _)
-            for _ in os.listdir(cwd)
-            if _.endswith(value.replace("*", "")) and pdappend.is_filetype(_)
-        ]
-
-        return filepaths
-
-    def target_to_filepath(target: str) -> Optional[Union[str, List[str]]]:
-        if target == "setup":
-            return target
-
-        if target == ".":
-            filepaths = [
-                os.path.join(cwd, _) for _ in os.listdir(cwd) if pdappend.is_filetype(_)
-            ]
-
-            return filepaths
-
-        ctarget = target.lower().strip()
-
-        if (
-            os.path.basename(ctarget).replace("*", "").replace(".", "")
-            in pdappend.FILETYPES
-        ):
-            return wildcard_to_filepaths(target)
-
-        filepath = os.path.normpath(os.path.join(cwd, target))
-
-        return filepath
-
-    def parse_save_as(string: str) -> str:
-        cstring = string.lower().strip()
-
-        if cstring not in pdappend.FILETYPES + ["excel"]:
-            raise (
-                ValueError(
-                    f"save-as configuration ({string}) is not a recognized result file type"
-                )
-            )
-
-        if cstring == "excel":
-            return "xlsx"
-
-        return cstring
-
-    parser = ArgumentParser(description="pdappend csv, xlsx, and xls files.")
-    parser.add_argument(
-        "targets",
-        nargs="*",
-        type=target_to_filepath,
-        help="files to append ('.', 'file.csv', '*.csv')",
-    )
-    parser.add_argument(
-        "--sheet-name",
-        type=str,
-        default=pdappend.DEFAULT_CONFIG.sheet_name,
-        help="Sheet name in excel files (default is 'Sheet1')",
-    )
-    parser.add_argument(
-        "--header-row",
-        type=int,
-        default=pdappend.DEFAULT_CONFIG.header_row,
-        help="Row number of column row (default is 0)",
-    )
-    parser.add_argument(
-        "--excel-header-row",
-        type=int,
-        default=pdappend.DEFAULT_CONFIG.excel_header_row,
-        help="Row number of column row in excel files (default is --header-row or 0)",
-    )
-    parser.add_argument(
-        "--csv-header-row",
-        type=int,
-        default=pdappend.DEFAULT_CONFIG.csv_header_row,
-        help="Row number of column row in csv files (default is --header-row or 0)",
-    )
-    parser.add_argument(
-        "--save-as",
-        type=parse_save_as,
-        default=pdappend.DEFAULT_CONFIG.save_as,
-        help="File type to save appended results as ('csv', 'xlsx', 'xls', 'excel')",
-    )
-    parser.add_argument(
-        "--show",
-        action="store_true",
-        help="Print files being appended",
-    )
-
-    return parser
-
-
-def init_cli() -> pdappend.Args:
-    """
-    Return pdappend.Args using prioritized commands and secondary .pdappend
-    """
-    pdappend_file_args = init_pdappend_file()
-    parsed_args = init_argparser().parse_args()
-    command_args = pdappend.Args(
-        targets=pdappend.Targets(values=parsed_args.targets),
-        flags=pdappend.Config(
-            sheet_name=parsed_args.sheet_name,
-            header_row=parsed_args.header_row,
-            excel_header_row=parsed_args.excel_header_row,
-            csv_header_row=parsed_args.csv_header_row,
-            save_as=parsed_args.save_as,
-            show=parsed_args.show,
-        ),
-    )
-
-    args = merge_args(args0=pdappend_file_args, args1=command_args)
-
-    return args
-
-
-def unpack_processed_targets(targets: List[str]) -> List[str]:
-    unpacked_targets = [_ for _ in targets]
-
-    return unpacked_targets
-
-
-def main(external_args: pdappend.Args = DEFAULT_ARGS):
-    init_logging()
-    initialized_args = init_cli()
-
-    # override any default configuration from arg1 -> arg0
-    args = merge_args(args0=initialized_args, args1=external_args)
-
-    if args.targets.values == ["setup"] or args.targets.values == "setup":
-        create_pdappend_file()
-
-        return
-
-    if len(sys.argv) == 1:
-        print(
+@click.group(cls=DefaultCommandGroup, invoke_without_command=True)
+@click.pass_context
+def main(ctx) -> None:
+    """Invoked entrypoint to pdappend."""
+    if not ctx.invoked_subcommand:
+        click.echo(
             "\n".join(
                 [
                     "",
                     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
-                    "~~~~~~~~~~ Welcome to pdappend! ~~~~~~~~~~~",
+                    "~~~~~~~~~~~~~~ pdappend cli ~~~~~~~~~~~~~~~",
                     "",
                     "Use pdappend to append csv, xlsx, and xls files.",
-                    "If you would like to learn more about how to use "
-                    "pdappend -> https://github.com/cnp0/pdappend/wiki",
+                    "Wiki: https://github.com/cnpryer/pdappend/wiki.",
+                    "",
+                    f"Version: pdappend-{__version__}",
                     "",
                     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
                     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
@@ -318,17 +65,143 @@ def main(external_args: pdappend.Args = DEFAULT_ARGS):
 
         os.system("pdappend --help")
 
+
+@main.command()
+def version() -> None:
+    """Command to print version of package."""
+    click.echo(f"pdappend-{__version__}")
+
+
+@main.command()
+def setup() -> None:
+    """Create .pdappend file in current working directory."""
+    config_string = pdappend.Config().as_config_file()
+    filepath = os.path.join(os.getcwd(), ".pdappend")
+
+    with open(filepath, "w") as f:
+        f.write(config_string)
+
+    click.echo(f".pdappend file saved to {os.path.dirname(filepath)}")
+
+
+def load_files(dirpath: str = os.getcwd()) -> List[str]:
+    """Load files found in target directory.
+
+    Args:
+        dirpath (str, optional): Path to directory. Defaults to os.getcwd().
+
+    Returns:
+        Tuple[str]: Filepaths found in directory.
+    """
+    files = []
+    for _ in os.listdir(dirpath):
+        files.append(os.path.join(dirpath, _))
+
+    return files
+
+
+def find_target_files(
+    arg: click.Argument, files: Union[List[str], Tuple[str]]
+) -> Set[str]:
+    """Parse filepaths using arg (true target) from files. This could be
+    specific filenames or regex wildcard identification strings.
+
+    Args:
+        arg (click.Argument): Targetting argument from CLI.
+        files (Union[List[str], Tuple[str]]): Files (filepaths or names) to
+        match in.
+
+    Returns:
+        str: Found files.
+    """
+    if arg == ".":
+        return [
+            _
+            for _ in files
+            if pdappend.parse_filename_extension(filename=_)
+            in pdappend.FILE_EXTENSIONS_ALLOWED
+        ]
+
+    # trim star syntax *wildcard*
+    arg = arg[1:] if arg.startswith("*") else arg
+
+    found = set()
+    for _ in files:
+        if _.endswith(arg):
+            found.add(_)
+
+    return found
+
+
+@main.command(default_command=True)
+@click.option(
+    "--csv-header-row",
+    default=constants.DEFAULT_CSV_HEADER_ROW,
+    help=constants.CSV_HEADER_ROW_DESCRIPTION,
+)
+@click.option(
+    "--excel-header-row",
+    default=constants.DEFAULT_EXCEL_HEADER_ROW,
+    help=constants.EXCEL_HEADER_ROW_DESCRIPTION,
+)
+@click.option(
+    "--save-as",
+    default=constants.DEFAULT_SAVE_AS,
+    help=constants.SAVE_AS_DESCRIPTION,
+)
+@click.option(
+    "--sheet-name",
+    default=constants.DEFAULT_SHEET_NAME,
+    help=constants.SHEET_NAME_DESCRIPTION,
+)
+@click.option(
+    "-verbose", is_flag=True, help="Run with more verobse console messaging."
+)
+@click.argument("args", nargs=-1)
+def append(args: Tuple[click.Argument], **kwargs) -> None:
+    """Command to append targets into one file.
+
+    Example:
+        ```
+        pdappend [target(s)] [...options]
+        ```
+        Where `[target(s)]` can be regex to parse cwd using or a list of
+        filenames.
+
+    Args:
+        args (Tuple[click.Argument]): Arguments passed to `pdappend` that
+        aren't subcommands.
+    """
+
+    if os.path.exists(".pdappend"):
+        click.echo(
+            "WARNING: .pdappend file found. "
+            "Remove .pdappend if you'd like to use CLI-based configuration."
+        )
+        config = pdappend.init_pdappend_file()
+
+    else:
+        config = pdappend.Config(
+            sheet_name=kwargs["sheet_name"],
+            csv_header_row=kwargs["csv_header_row"],
+            excel_header_row=kwargs["excel_header_row"],
+            save_as=kwargs["save_as"],
+            verbose=kwargs["verbose"],
+        )
+
+    all_files = load_files()
+    files = set()
+    for arg in args:
+        found = find_target_files(arg, files=all_files)
+        for _ in found:
+            files.add(_)
+
+    files = list(files)
+    if not files:
+        click.echo(f"Unable to find files from target args: {args}")
+
         return
 
-    logging.debug(f"pdappend setup {str(args)}")
-
-    files = []
-    for _ in args.targets.values:
-        if isinstance(_, list):
-            files += unpack_processed_targets(_)
-        else:
-            files.append(_)
-
-    files = list(set(files))
-    df = pdappend.append(files, config=args.flags)
-    pdappend.save_result(df, save_as=args.flags.save_as)
+    click.echo(f"Appending: {files}")
+    df = pdappend.append(files, config)
+    pdappend.save_result(df, config)

@@ -1,5 +1,5 @@
 [![PyPI Latest Release](https://img.shields.io/pypi/v/pdappend)](https://pypi.org/project/pdappend/)
-![tests](https://github.com/cnp0/pdappend/workflows/tests/badge.svg)
+![tests](https://github.com/cnpryer/pdappend/workflows/tests/badge.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![pdappend](https://img.shields.io/pypi/pyversions/pdappend?color=blue)
 
@@ -7,7 +7,7 @@ This project is under development.
 
 # pdappend
 
-Run `pdappend` from the command line to append csv, xlsx, and xls files. 
+Run `pdappend` from the command line to append csv, xlsx, and xls files.
 
 ## Installation
 
@@ -36,7 +36,7 @@ Append all `pdappend`-compatible files in your directory
 ## Documentation
 
 (TODO)
-See the [wiki](https://github.com/cnp0/pdappend/wiki) for more on `pdappend`.
+See the [wiki](https://github.com/cnpryer/pdappend/wiki) for more on `pdappend`.
 
 ## Contributing
 

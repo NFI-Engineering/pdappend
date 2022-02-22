@@ -1,6 +1,6 @@
 # Contributing to `pdappend`
 
-To contribute to `pdappend` fork the repository and submit a pull request with your compatible code. Check [projects](https://github.com/cnpls/pdappend/projects) or [issues](https://github.com/cnpls/pdappend/issues) for any features that are already planned to be implemented. Otherwise make sure to add an explanation of why your unique feature adds value to `pdappend`.
+To contribute to `pdappend` fork the repository and submit a pull request with your compatible code. Check [projects](https://github.com/cnpryer/pdappend/projects) or [issues](https://github.com/cnpryer/pdappend/issues) for any features that are already planned to be implemented. Otherwise make sure to add an explanation of why your unique feature adds value to `pdappend`.
 
 # Direction of `pdappend`
 

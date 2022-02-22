@@ -2,138 +2,215 @@ import os
 import pandas as pd
 import logging
 
-from typing import NamedTuple, Union, Optional, List
+from typing import NamedTuple, List, Tuple, Union
+from dotenv import load_dotenv
 
-from pdappend import utils
-from pdappend.config import Config
-
-
-FILETYPES = ["csv", "xls", "xlsx"]
-DEFAULT_CONFIG = Config(
-    sheet_name="Sheet1",
-    header_row=0,
-    excel_header_row=None,
-    csv_header_row=None,
-    save_as="csv",
-    show=False,
-)
+from pdappend import constants
+from pdappend.errors import FileExtensionError, SaveAsError
+from pdappend.data import FileExtension
 
 
-class Targets(NamedTuple):
-    values: Optional[Union[str, List[str]]]
+# file extension types pdappend recognizes and can consume
+FILE_EXTENSIONS_ALLOWED = [
+    FileExtension.Csv,
+    FileExtension.Xls,
+    FileExtension.Xlsx,
+]
+
+# possible filenames for results
+RESULT_FILENAMES_ALLOWED = [f"pdappend.{_}" for _ in FILE_EXTENSIONS_ALLOWED]
+
+
+class Config(NamedTuple):
+    """pdappend Config data."""
+
+    sheet_name: str = constants.DEFAULT_SHEET_NAME
+    csv_header_row: int = constants.DEFAULT_CSV_HEADER_ROW
+    excel_header_row: int = constants.DEFAULT_EXCEL_HEADER_ROW
+    save_as: str = constants.DEFAULT_SAVE_AS
+    verbose: bool = False
 
     def __str__(self) -> str:
-        return ", ".join([f"values: {self.values}"])
+        return ", ".join(
+            [
+                f"sheet_name: {self.sheet_name}",
+                f"excel_header_row: {self.excel_header_row}",
+                f"csv_header_row: {self.csv_header_row}",
+                f"save_as: {self.save_as}",
+                f"verbose: {self.verbose}",
+            ]
+        )
+
+    def as_config_file(self) -> str:
+        return "\n".join(
+            [
+                f"SHEET_NAME={self.sheet_name}",
+                f"EXCEL_HEADER_ROW={self.excel_header_row}",
+                f"CSV_HEADER_ROW={self.csv_header_row}",
+                f"SAVE_AS={self.save_as}",
+                f"VERBOSE={self.verbose}",
+            ]
+        )
 
 
-class Args(NamedTuple):
-    targets: Targets
-    flags: Config
+def init_pdappend_file() -> Config:
+    """Init Args with .pdappend file. TODO: replace with `yml`"""
+    load_dotenv(".pdappend")
 
-    def __str__(self) -> str:
-        return ", ".join([f"targets: {str(self.targets)}", f"flags: {str(self.flags)}"])
+    sheet_name = os.getenv("SHEET_NAME")
+    csv_header_row = (
+        int(os.getenv("CSV_HEADER_ROW"))
+        if os.getenv("CSV_HEADER_ROW")
+        else constants.DEFAULT_CSV_HEADER_ROW
+    )
+    excel_header_row = (
+        int(os.getenv("EXCEL_HEADER_ROW"))
+        if os.getenv("EXCEL_HEADER_ROW")
+        else constants.DEFAULT_EXCEL_HEADER_ROW
+    )
+    save_as = os.getenv("SAVE_AS") or constants.DEFAULT_SAVE_AS
+    verbose = os.getenv("VERBOSE") or False
+
+    config = Config(
+        sheet_name,
+        csv_header_row,
+        excel_header_row,
+        save_as,
+        verbose,
+    )
+
+    return config
 
 
-def is_filetype(filename: str) -> bool:
+def parse_filename_extension(filename: str) -> FileExtension:
+    """Parses FileExtension from filename.
+
+    Args:
+        filename (str): String of filename to parse.
+
+    Returns:
+        FileExtension: FileExtension data.
     """
-    Return true if fname is ends with .csv, .xlsx, or .xls.
-    Otherwise return False.
+    ext = os.path.splitext(filename)[1]
 
-    :filename:      filename string
-
-    Returns bool
-    """
-    cfname = filename.lower()
-
-    if cfname.endswith(".csv") and not cfname.startswith("pdappend"):
-        return True
-
-    elif cfname.endswith(".xlsx"):
-        return True
-
-    elif cfname.endswith(".xls"):
-        return True
-
-    return False
+    return ext
 
 
-def read_file(filepath: str, config: Config = DEFAULT_CONFIG) -> pd.DataFrame:
-    """
-    Read .csv, .xlsx, .xls to pandas dataframe. Read only a certain sheet name and skip
-    to header row using sheet_name and header_index.
+def read_file(filepath: str, config: Config = Config()) -> pd.DataFrame:
+    """Read .csv, .xlsx, .xls to pandas dataframe. Read only a certain sheet
+    name and skip to header row using sheet_name and header_index.
 
-    :filepath:      path to file (str)
-    :config:        dtype.Config
+    Args:
+        filepath (str): Path to file.
+        config (Config, optional): dtype.Config.
 
-    Returns pd.DataFrame
+    Raises:
+        FileExtensionError: Error if filetype is incorrect.
+
+    Returns:
+        pd.DataFrame: Pandas DataFrame.
     """
     filename = os.path.basename(filepath).lower()
-    excel_header_row = utils._or(config.excel_header_row, config.header_row)
-    csv_header_row = utils._or(config.csv_header_row, config.header_row)
+    ext = parse_filename_extension(filename)
 
-    if filename == "pdappend.csv":
-        logging.warning("Cannot read reserved result filename (pdappend.csv)")
+    if filename in RESULT_FILENAMES_ALLOWED:
+        logging.warning(f"Cannot read reserved result filename ({filename})")
 
         return pd.DataFrame()
 
-    if not is_filetype(filename):
-        raise ValueError(f"file {filename} is not .csv, .xslx, or .xls")
-
-    if ".xls" in filename:
-        return pd.read_excel(
-            filepath,
-            sheet_name=config.sheet_name,
-            skiprows=list(range(0, int(excel_header_row))),
+    if ext not in FILE_EXTENSIONS_ALLOWED:
+        raise FileExtensionError(
+            f"File {filename} is not {FILE_EXTENSIONS_ALLOWED}"
         )
 
-    if filename.endswith(".csv"):
-        return pd.read_csv(filepath, skiprows=list(range(0, int(csv_header_row))))
+    if ext == FileExtension.Xlsx or ext == FileExtension.Xls:
+        df = pd.read_excel(
+            filepath,
+            sheet_name=config.sheet_name,
+            skiprows=list(range(0, config.excel_header_row)),
+        )
+
+        return df
+
+    if ext == FileExtension.Csv:
+        df = pd.read_csv(
+            filepath, skiprows=list(range(0, config.csv_header_row))
+        )
+
+        return df
 
 
-def append(files: List[str], config: Config = DEFAULT_CONFIG) -> pd.DataFrame:
+def append(
+    files: Union[List[str], Tuple[str]], config: Config = Config()
+) -> pd.DataFrame:
+    """Append files using pdappend.Config.
+
+    Args:
+        files (List[str]): list of filepaths to read and append together.
+        config (Config, optional): pdappend.Config. Defaults to DEFAULT_CONFIG.
+
+    Returns:
+        pd.DataFrame: Appended Pandas DataFrame.
     """
-    Append files using pdappend.Config
-
-    :files:     list of filepaths to read and append together
-    :config:    pdappend.Config
-
-    Returns pd.DataFrame
-    """
-    df = pd.DataFrame()
-
+    targets = []
     for _ in files:
-        logging.info(f"Appending {_}") if config.show else None
-        tmpdf = read_file(_, config)
-        tmpdf["filename"] = os.path.basename(_)
+        logging.info(f"Appending {_}") if config.verbose else None
+        target_df = read_file(_, config)
+        target_df["filename"] = os.path.basename(_)
+        targets.append(target_df)
 
-        df = df.append(tmpdf, sort=False)
+    df = pd.concat(targets)
 
     return df
 
 
 def save_result(
     df: pd.DataFrame,
-    save_as: str = DEFAULT_CONFIG.save_as,
+    config: str = Config(),
     directory: str = os.getcwd(),
 ) -> None:
-    """
-    Saves pandas dataframe as pdappend.csv in a directory.
+    """Saves Pandas DataFrame as pdappend.{Config.save_as} in a directory.
 
-    :df:           pandas dataframe of data
-    :save_as:      Config.save_as ("xls", "xlsx", "csv", "excel")
-    :directory:    string of full path to directory
+    Args:
+        df (pd.DataFrame): Pandas DataFrame.
+        save_as (str, optional): "xls", "xlsx", "csv", "excel". Defaults to
+        DEFAULT_CONFIG.save_as.
+        directory (str, optional): String of full path to directory. Defaults
+        to os.getcwd().
+
+    Raises:
+        SaveAsError: Save-as data is invalid.
     """
-    filepath = os.path.join(directory, f"pdappend.{save_as}")
+    # TODO: force full dot-string extension
+    ext = (
+        config.save_as
+        if config.save_as.startswith(".")
+        else "." + config.save_as
+    )
+    filepath = os.path.join(
+        directory,
+        f"pdappend{ext}",
+    )
 
     if os.path.exists(filepath):
         os.remove(filepath)
 
-    if save_as == "xlsx":
+    logging.info(
+        "Saving appended data "
+        f"({df.shape[0]} rows, {df.shape[1]} columns) to {filepath}"
+    )
+
+    if (
+        config.save_as == FileExtension.Xlsx
+        or config.save_as == FileExtension.Xls
+    ):
         df.to_excel(filepath, index=False)
 
         return
 
-    logging.info(
-        f"Saving appended data ({df.shape[0]} rows, {df.shape[1]} columns) to {filepath}"
-    )
-    df.to_csv(filepath, index=False)
+    if config.save_as == FileExtension.Csv:
+        df.to_csv(filepath, index=False)
+
+        return
+
+    raise SaveAsError(f"Could not save file as {config.save_as}.")

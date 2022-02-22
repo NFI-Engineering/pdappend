@@ -3,8 +3,7 @@
         "eamodio.gitlens",
         "davidanson.vscode-markdownlint",
         "ms-python.python",
-        "njpwerner.autodocstring",
-        "grapecity.gc-excelviewer",
-        "redhat.vscode-yaml"
+        "redhat.vscode-yaml",
+        "njpwerner.autodocstring"
     ]
 }

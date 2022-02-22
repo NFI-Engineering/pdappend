@@ -1,6 +1,9 @@
-import pdappend
+# from click.testing import CliRunner
 import pandas as pd
 import os
+
+# from pdappend import cli
+
 from . import test_dir, f1, f2, f3, f4
 
 
@@ -19,7 +22,10 @@ def write_pdappend_file():
     filepath = os.path.join(os.getcwd(), ".pdappend")
 
     with open(filepath, "w") as f:
-        f.write(f"SHEET_NAME=Sheet1\nHEADER_ROW=1\nCSV_HEADER_ROW=0")
+        f.write(
+            "SHEET_NAME=Sheet1\nCSV_HEADER_ROW=0\nEXCEL_HEADER_ROW=1\n"
+            "SAVE_AS=.csv"
+        )
 
 
 def teardown():
@@ -33,10 +39,17 @@ def test_append_all():
 
     result = get_result()
 
-    assert result.shape[0] == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
+    assert (
+        result.shape[0]
+        == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
+    )
 
     assert (
-        result.shape[1] - 1 == f1.shape[1] == f2.shape[1] == f3.shape[1] == f4.shape[1]
+        result.shape[1] - 1
+        == f1.shape[1]
+        == f2.shape[1]
+        == f3.shape[1]
+        == f4.shape[1]
     )
 
     teardown()
@@ -63,10 +76,17 @@ def test_append_wildcard():
 
     result = get_result()
 
-    assert result.shape[0] == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
+    assert (
+        result.shape[0]
+        == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
+    )
 
     assert (
-        result.shape[1] - 1 == f1.shape[1] == f2.shape[1] == f3.shape[1] == f4.shape[1]
+        result.shape[1] - 1
+        == f1.shape[1]
+        == f2.shape[1]
+        == f3.shape[1]
+        == f4.shape[1]
     )
 
     teardown()
@@ -80,10 +100,17 @@ def test_append_with_pdappend_file():
 
     result = get_result()
 
-    assert result.shape[0] == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
+    assert (
+        result.shape[0]
+        == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
+    )
 
     assert (
-        result.shape[1] - 1 == f1.shape[1] == f2.shape[1] == f3.shape[1] == f4.shape[1]
+        result.shape[1] - 1
+        == f1.shape[1]
+        == f2.shape[1]
+        == f3.shape[1]
+        == f4.shape[1]
     )
 
     teardown()
@@ -92,14 +119,23 @@ def test_append_with_pdappend_file():
 def test_append_with_flags():
     init()
 
-    os.system("pdappend . --sheet-name=Sheet1 --header-row=1 --csv-header-row=0")
+    os.system(
+        "pdappend . --sheet-name=Sheet1 --csv-header-row=0 --excel-header-row=1"
+    )
 
     result = get_result()
 
-    assert result.shape[0] == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
+    assert (
+        result.shape[0]
+        == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
+    )
 
     assert (
-        result.shape[1] - 1 == f1.shape[1] == f2.shape[1] == f3.shape[1] == f4.shape[1]
+        result.shape[1] - 1
+        == f1.shape[1]
+        == f2.shape[1]
+        == f3.shape[1]
+        == f4.shape[1]
     )
 
     teardown()

@@ -1,33 +1,22 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
+            "python": "${workspaceRoot}/.venv/Scripts/python.exe",
             "program": "${file}",
-            "python": "${workspaceRoot}/venv/Scripts/python.exe",
             "console": "integratedTerminal"
         },
         {
-            "name": "run commands",
+            "name": "Python: Pytest",
             "type": "python",
             "request": "launch",
-            "python": "${workspaceRoot}/venv/Scripts/python.exe",
             "console": "integratedTerminal",
-            "module": "pytest"
-        },
-        {
-            "name": "cli.main",
-            "type": "python",
-            "request": "launch",
-            "python": "${workspaceRoot}/venv/Scripts/python.exe",
-            "console": "integratedTerminal",
+            "python": "${workspaceRoot}/.venv/Scripts/python.exe",
             "module": "pytest",
-            "args": ["tests/test_package.py::test_cli", "."]
-        }
+            "cwd": "${workspaceRoot}"
+        },
     ]
 }

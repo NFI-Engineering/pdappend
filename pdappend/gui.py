@@ -1,20 +1,24 @@
 import os
-from pdappend import pdappend, cli
+
 from tkinter import filedialog
-from tkinter import *
+from tkinter import Tk
+
+from pdappend import pdappend
 
 
 def main():
+    """Main GUI entrypoint logic. Assumes if there's any configuration it's done
+    using .pdappend files."""
     root = Tk()
     root.withdraw()
 
-    # TODO: from pdappend.pdappend.FILE_TYPES
+    filetypes = "".join(pdappend.FILE_EXTENSIONS_ALLOWED)
     files = filedialog.askopenfilenames(
-        initialdir=os.getcwd(), filetypes=[(".xlsx .xls .csv", ".xlsx .xls .csv")]
+        initialdir=os.getcwd(),
+        # TODO: why does this need (_, _) tuples?
+        filetypes=[(filetypes, filetypes)],
     )
 
-    args = pdappend.Args(
-        targets=pdappend.Targets(values=files), flags=pdappend.DEFAULT_CONFIG
-    )
-
-    cli.main(args)
+    config = pdappend.init_pdappend_file()
+    df = pdappend.append(files, config)
+    pdappend.save_result(df, config)
