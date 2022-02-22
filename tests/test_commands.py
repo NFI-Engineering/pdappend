@@ -120,7 +120,10 @@ def test_append_with_flags():
     init()
 
     os.system(
-        "pdappend . --sheet-name=Sheet1 --csv-header-row=0 --excel-header-row=1"
+        "pdappend . "
+        "--sheet-name=Sheet1 "
+        "--csv-header-row=0 "
+        "--excel-header-row=1"
     )
 
     result = get_result()
