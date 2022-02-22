@@ -91,7 +91,7 @@ def load_files(dirpath: str = os.getcwd()) -> List[str]:
         dirpath (str, optional): Path to directory. Defaults to os.getcwd().
 
     Returns:
-        Tuple[str]: Filepaths found in directory.
+        List[str]: Filepaths found in directory.
     """
     files = []
     for _ in os.listdir(dirpath):
@@ -112,7 +112,7 @@ def find_target_files(
         match in.
 
     Returns:
-        str: Found files.
+        Set[str]: Found files.
     """
     if arg == ".":
         return [
