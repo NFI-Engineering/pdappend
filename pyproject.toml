@@ -1,9 +1,12 @@
 [tool.poetry]
 name = "pdappend"
-version = "0.0.19"
+version = "0.1.0"
 description = "Append csv, xlsx, and xls files."
 authors = ["Chris <cnpryer@gmail.com>"]
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/cnpryer/pdappend"
+documentation = "https://github.com/cnpryer/pdappend/wiki"
 
 [tool.poetry.dependencies]
 python = "^3.8"
