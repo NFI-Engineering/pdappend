@@ -1,7 +1,6 @@
 import os
 
-from tkinter import filedialog
-from tkinter import Tk
+from tkinter import Tk, filedialog
 
 from pdappend import pdappend
 

@@ -206,8 +206,8 @@ def append(args: Tuple[click.Argument], **kwargs) -> None:
         ```
         pdappend [target(s)] [...options]
         ```
-        Where `[target(s)]` can be regex to parse cwd using or a list of
-        filenames.
+        Where `[target(s)]` can be identifying strings to search
+        with or exact filenames.
 
     Args:
         args (Tuple[click.Argument]): Arguments passed to `pdappend` that
