@@ -14,3 +14,12 @@ DEFAULT_SAVE_AS = FileExtension.Csv.value
 
 SHEET_NAME_DESCRIPTION = "Sheet name in Excel files to target."
 DEFAULT_SHEET_NAME = "Sheet1"
+
+VERBOSE_DESCRIPTION = "Run with more verobse console messaging."
+DEFAULT_VERBOSE = False
+
+RECURSIVE_DESCRIPTION = "Search full directory tree."
+DEFAULT_RECURSIVE = False
+
+IGNORE_DESCRIPTION = "Contents ignored during searches."
+DEFAULT_IGNORE = []

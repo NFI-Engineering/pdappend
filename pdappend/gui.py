@@ -12,13 +12,13 @@ def main():
     root = Tk()
     root.withdraw()
 
-    filetypes = "".join(pdappend.FILE_EXTENSIONS_ALLOWED)
+    filetypes = " ".join(pdappend.FILE_EXTENSIONS_ALLOWED)
     files = filedialog.askopenfilenames(
         initialdir=os.getcwd(),
         # TODO: why does this need (_, _) tuples?
         filetypes=[(filetypes, filetypes)],
     )
 
-    config = pdappend.init_pdappend_file()
+    config = pdappend.read_pdappend_file()
     df = pdappend.append(files, config)
     pdappend.save_result(df, config)

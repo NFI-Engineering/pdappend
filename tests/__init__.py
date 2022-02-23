@@ -2,6 +2,13 @@ import os
 import pandas as pd
 
 
+def clear() -> None:
+    if os.path.exists(".pdappend"):
+        os.remove(".pdappend")
+    if os.path.exists("pdappend.csv"):
+        os.remove("pdappend.csv")
+
+
 test_dir = os.path.dirname(os.path.abspath(__file__))
 
 # testing files

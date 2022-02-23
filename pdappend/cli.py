@@ -84,20 +84,50 @@ def setup() -> None:
     click.echo(f".pdappend file saved to {os.path.dirname(filepath)}")
 
 
-def load_files(dirpath: str = os.getcwd()) -> List[str]:
+def filter_files(files: Union[List[str], Tuple[str]]) -> List[str]:
+    """Filter internally conflicting files out of a list of files/filepaths."""
+    files = list(
+        filter(
+            lambda x: os.path.basename(x)
+            not in pdappend.RESULT_FILENAMES_ALLOWED,
+            files,
+        )
+    )
+
+    return files
+
+
+def load_files(
+    dirpath: str = os.getcwd(),
+    recursive: bool = constants.DEFAULT_RECURSIVE,
+    ignored_dirs: Union[List[str], Tuple[str]] = [],
+) -> List[str]:
     """Load files found in target directory.
 
     Args:
         dirpath (str, optional): Path to directory. Defaults to os.getcwd().
+        recursive (bool, optional): If True, recursively search directory tree.
+        ignored_dirs (Union[List[str], Tuple[str]], optional): Directories to
+        ignore during searches.
 
     Returns:
         List[str]: Filepaths found in directory.
     """
-    files = []
-    for _ in os.listdir(dirpath):
-        files.append(os.path.join(dirpath, _))
+    files_loaded = []
 
-    return files
+    if not recursive:
+        for _ in filter_files(files=os.listdir(dirpath)):
+            files_loaded.append(os.path.join(dirpath, _))
+
+        return files_loaded
+
+    for path, subdirs, files in os.walk(dirpath, topdown=True):
+        subdirs[:] = list(filter(lambda x: x not in ignored_dirs, subdirs))
+        files[:] = filter_files(files)
+        for name in files:
+            files_loaded.append(os.path.join(path, name))
+
+    return files_loaded
 
 
 def find_target_files(
@@ -122,13 +152,11 @@ def find_target_files(
             in pdappend.FILE_EXTENSIONS_ALLOWED
         ]
 
-    # trim star syntax *wildcard*
-    arg = arg[1:] if arg.startswith("*") else arg
-
     found = set()
-    for _ in files:
-        if _.endswith(arg):
-            found.add(_)
+    for _ in filter(
+        lambda x: x.endswith(arg[1:] if arg.startswith("*") else arg), files
+    ):
+        found.add(_)
 
     return found
 
@@ -155,7 +183,20 @@ def find_target_files(
     help=constants.SHEET_NAME_DESCRIPTION,
 )
 @click.option(
-    "-verbose", is_flag=True, help="Run with more verobse console messaging."
+    "--verbose",
+    is_flag=True,
+    help=constants.VERBOSE_DESCRIPTION,
+)
+@click.option(
+    "--recursive",
+    is_flag=True,
+    help=constants.RECURSIVE_DESCRIPTION,
+)
+@click.option(
+    "--ignore",
+    default=[],
+    multiple=True,
+    help=constants.RECURSIVE_DESCRIPTION,
 )
 @click.argument("args", nargs=-1)
 def append(args: Tuple[click.Argument], **kwargs) -> None:
@@ -172,13 +213,16 @@ def append(args: Tuple[click.Argument], **kwargs) -> None:
         args (Tuple[click.Argument]): Arguments passed to `pdappend` that
         aren't subcommands.
     """
+    if os.path.exists("pdappend.csv"):
+        # https://github.com/cnpryer/pdappend/issues/23
+        raise Exception("Remove pdappend.csv from directory.")
 
     if os.path.exists(".pdappend"):
         click.echo(
             "WARNING: .pdappend file found. "
             "Remove .pdappend if you'd like to use CLI-based configuration."
         )
-        config = pdappend.init_pdappend_file()
+        config = pdappend.read_pdappend_file()
 
     else:
         config = pdappend.Config(
@@ -187,9 +231,13 @@ def append(args: Tuple[click.Argument], **kwargs) -> None:
             excel_header_row=kwargs["excel_header_row"],
             save_as=kwargs["save_as"],
             verbose=kwargs["verbose"],
+            recursive=kwargs["recursive"],
+            ignore=kwargs["ignore"],
         )
 
-    all_files = load_files()
+    all_files = load_files(
+        recursive=config.recursive, ignored_dirs=config.ignore
+    )
     files = set()
     for arg in args:
         found = find_target_files(arg, files=all_files)
@@ -202,6 +250,6 @@ def append(args: Tuple[click.Argument], **kwargs) -> None:
 
         return
 
-    click.echo(f"Appending: {files}")
+    click.echo(f"Appending: {list(map(lambda x: os.path.basename(x), files))}")
     df = pdappend.append(files, config)
     pdappend.save_result(df, config)

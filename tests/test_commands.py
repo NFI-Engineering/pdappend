@@ -1,144 +1,200 @@
-# from click.testing import CliRunner
 import pandas as pd
 import os
 
-# from pdappend import cli
+from click.testing import CliRunner
 
-from . import test_dir, f1, f2, f3, f4
+from pdappend import cli
 
-
-def init():
-    os.chdir(test_dir)
-    os.system("rm pdappend.csv .pdappend")
+from . import f1, f2, f3, f4, clear
 
 
-def get_result() -> pd.DataFrame:
-    filepath = os.path.join(test_dir, "pdappend.csv")
+# clear testing artifacts TODO: pytest tmp dirs
+clear()
+
+runner = CliRunner()
+
+
+def get_result_file() -> pd.DataFrame:
+    filepath = "pdappend.csv"
+
+    if not os.path.exists(filepath):
+        return pd.DataFrame()
 
     return pd.read_csv(filepath)
 
 
-def write_pdappend_file():
+def write_pdappend_file() -> None:
     filepath = os.path.join(os.getcwd(), ".pdappend")
 
     with open(filepath, "w") as f:
         f.write(
             "SHEET_NAME=Sheet1\nCSV_HEADER_ROW=0\nEXCEL_HEADER_ROW=1\n"
-            "SAVE_AS=.csv"
+            "SAVE_AS=.csv\nRECURSIVE=True"
+            "\nIGNORE=.venv,dist,.pytest_cache,__pycache__,.git"
         )
 
 
-def teardown():
-    os.system("rm .pdappend pdappend.csv")
-
-
 def test_append_all():
-    init()
+    clear()
 
-    os.system("pdappend . --excel-header-row=1")
+    res = runner.invoke(
+        cli.main,
+        [
+            ".",
+            "--excel-header-row=1",
+            "--recursive",
+            "--ignore=.venv",
+            "--ignore=dist",
+            "--ignore=.pytest_cache",
+            "--ignore=__pycache__",
+            "--ignore=.git",
+        ],
+    )
 
-    result = get_result()
+    assert res.exit_code == 0
+
+    res = get_result_file()
 
     assert (
-        result.shape[0]
-        == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
+        res.shape[0] == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
     )
 
     assert (
-        result.shape[1] - 1
+        res.shape[1] - 1
         == f1.shape[1]
         == f2.shape[1]
         == f3.shape[1]
         == f4.shape[1]
     )
-
-    teardown()
 
 
 def test_append_filenames():
-    init()
+    clear()
 
-    os.system("pdappend f1.csv f4.xls --excel-header-row=1")
+    res = runner.invoke(
+        cli.main,
+        [
+            "f1.csv",
+            "f4.xls",
+            "--excel-header-row=1",
+            "--recursive",
+            "--ignore=.venv",
+            "--ignore=dist",
+            "--ignore=.pytest_cache",
+            "--ignore=__pycache__",
+            "--ignore=.git",
+        ],
+    )
 
-    result = get_result()
+    assert res.exit_code == 0
 
-    assert result.shape[0] == f1.shape[0] + f4.shape[0]
+    res = get_result_file()
 
-    assert result.shape[1] - 1 == f1.shape[1] == f4.shape[1]
+    assert res.shape[0] == f1.shape[0] + f4.shape[0]
 
-    teardown()
+    assert res.shape[1] - 1 == f1.shape[1] == f4.shape[1]
 
 
 def test_append_wildcard():
-    init()
+    clear()
 
-    os.system("pdappend *.csv *.xls --excel-header-row=1")
+    res = runner.invoke(
+        cli.main,
+        [
+            "*.csv",
+            "*.xls",
+            "--excel-header-row=1",
+            "--recursive",
+            "--ignore=.venv",
+            "--ignore=dist",
+            "--ignore=.pytest_cache",
+            "--ignore=__pycache__",
+            "--ignore=.git",
+        ],
+    )
 
-    result = get_result()
+    assert res.exit_code == 0
+
+    res = get_result_file()
 
     assert (
-        result.shape[0]
-        == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
+        res.shape[0] == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
     )
 
     assert (
-        result.shape[1] - 1
+        res.shape[1] - 1
         == f1.shape[1]
         == f2.shape[1]
         == f3.shape[1]
         == f4.shape[1]
     )
-
-    teardown()
 
 
 def test_append_with_pdappend_file():
-    init()
+    clear()
     write_pdappend_file()
 
-    os.system("pdappend .")
+    res = runner.invoke(
+        cli.main,
+        [
+            ".",
+            "--recursive",
+            "--ignore=.venv",
+            "--ignore=dist",
+            "--ignore=.pytest_cache",
+            "--ignore=__pycache__",
+            "--ignore=.git",
+        ],
+    )
 
-    result = get_result()
+    assert res.exit_code == 0
+
+    res = get_result_file()
 
     assert (
-        result.shape[0]
-        == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
+        res.shape[0] == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
     )
 
     assert (
-        result.shape[1] - 1
+        res.shape[1] - 1
         == f1.shape[1]
         == f2.shape[1]
         == f3.shape[1]
         == f4.shape[1]
     )
-
-    teardown()
 
 
 def test_append_with_flags():
-    init()
+    clear()
 
-    os.system(
-        "pdappend . "
-        "--sheet-name=Sheet1 "
-        "--csv-header-row=0 "
-        "--excel-header-row=1"
+    res = runner.invoke(
+        cli.main,
+        [
+            ".",
+            "--sheet-name=Sheet1",
+            "--csv-header-row=0",
+            "--excel-header-row=1",
+            "--recursive",
+            "--ignore=.venv",
+            "--ignore=dist",
+            "--ignore=.pytest_cache",
+            "--ignore=__pycache__",
+            "--ignore=.git",
+        ],
     )
 
-    result = get_result()
+    assert res.exit_code == 0
+
+    res = get_result_file()
 
     assert (
-        result.shape[0]
-        == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
+        res.shape[0] == f1.shape[0] + f2.shape[0] + f3.shape[0] + f4.shape[0]
     )
 
     assert (
-        result.shape[1] - 1
+        res.shape[1] - 1
         == f1.shape[1]
         == f2.shape[1]
         == f3.shape[1]
         == f4.shape[1]
     )
-
-    teardown()

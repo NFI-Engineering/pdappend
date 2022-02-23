@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-import logging
+import click
 
 from typing import NamedTuple, List, Tuple, Union
 from dotenv import load_dotenv
@@ -18,7 +18,9 @@ FILE_EXTENSIONS_ALLOWED = [
 ]
 
 # possible filenames for results
-RESULT_FILENAMES_ALLOWED = [f"pdappend.{_}" for _ in FILE_EXTENSIONS_ALLOWED]
+RESULT_FILENAMES_ALLOWED = [
+    f"pdappend{_.value}" for _ in FILE_EXTENSIONS_ALLOWED
+]
 
 
 class Config(NamedTuple):
@@ -28,7 +30,9 @@ class Config(NamedTuple):
     csv_header_row: int = constants.DEFAULT_CSV_HEADER_ROW
     excel_header_row: int = constants.DEFAULT_EXCEL_HEADER_ROW
     save_as: str = constants.DEFAULT_SAVE_AS
-    verbose: bool = False
+    verbose: bool = constants.DEFAULT_VERBOSE
+    recursive: bool = constants.DEFAULT_VERBOSE
+    ignore: Union[List[str], Tuple[str]] = constants.DEFAULT_IGNORE
 
     def __str__(self) -> str:
         return ", ".join(
@@ -38,10 +42,14 @@ class Config(NamedTuple):
                 f"csv_header_row: {self.csv_header_row}",
                 f"save_as: {self.save_as}",
                 f"verbose: {self.verbose}",
+                f"recursive: {self.recursive}",
+                f"ignore: {self.ignore}",
             ]
         )
 
     def as_config_file(self) -> str:
+        ignore_str = str(self.ignore).replace("[", "").replace("[", "")
+
         return "\n".join(
             [
                 f"SHEET_NAME={self.sheet_name}",
@@ -49,15 +57,17 @@ class Config(NamedTuple):
                 f"CSV_HEADER_ROW={self.csv_header_row}",
                 f"SAVE_AS={self.save_as}",
                 f"VERBOSE={self.verbose}",
+                f"RECURSIVE={self.recursive}",
+                f"IGNORE={ignore_str}",
             ]
         )
 
 
-def init_pdappend_file() -> Config:
+def read_pdappend_file() -> Config:
     """Init Args with .pdappend file. TODO: replace with `yml`"""
     load_dotenv(".pdappend")
 
-    sheet_name = os.getenv("SHEET_NAME")
+    sheet_name = os.getenv("SHEET_NAME") or constants.DEFAULT_SHEET_NAME
     csv_header_row = (
         int(os.getenv("CSV_HEADER_ROW"))
         if os.getenv("CSV_HEADER_ROW")
@@ -69,7 +79,14 @@ def init_pdappend_file() -> Config:
         else constants.DEFAULT_EXCEL_HEADER_ROW
     )
     save_as = os.getenv("SAVE_AS") or constants.DEFAULT_SAVE_AS
-    verbose = os.getenv("VERBOSE") or False
+    verbose = True if os.getenv("VERBOSE") in ["1", "True"] else False
+    recursive = True if os.getenv("RECURSIVE") in ["1", "True"] else False
+    ignore = (
+        os.getenv("IGNORE").split(",")
+        if os.getenv("IGNORE")
+        else constants.DEFAULT_IGNORE
+    )
+    ignore = [_.strip() for _ in ignore]
 
     config = Config(
         sheet_name,
@@ -77,6 +94,8 @@ def init_pdappend_file() -> Config:
         excel_header_row,
         save_as,
         verbose,
+        recursive,
+        ignore,
     )
 
     return config
@@ -114,7 +133,9 @@ def read_file(filepath: str, config: Config = Config()) -> pd.DataFrame:
     ext = parse_filename_extension(filename)
 
     if filename in RESULT_FILENAMES_ALLOWED:
-        logging.warning(f"Cannot read reserved result filename ({filename})")
+        click.echo(
+            f"WARNING: Cannot read reserved result filename ({filename})"
+        )
 
         return pd.DataFrame()
 
@@ -154,7 +175,7 @@ def append(
     """
     targets = []
     for _ in files:
-        logging.info(f"Appending {_}") if config.verbose else None
+        click.echo(f"Appending {_}") if config.verbose else None
         target_df = read_file(_, config)
         target_df["filename"] = os.path.basename(_)
         targets.append(target_df)
@@ -166,15 +187,14 @@ def append(
 
 def save_result(
     df: pd.DataFrame,
-    config: str = Config(),
+    config: Config = Config(),
     directory: str = os.getcwd(),
 ) -> None:
-    """Saves Pandas DataFrame as pdappend.{Config.save_as} in a directory.
+    """Saves Pandas DataFrame as pdappend{Config.save_as} in a directory.
 
     Args:
         df (pd.DataFrame): Pandas DataFrame.
-        save_as (str, optional): "xls", "xlsx", "csv", "excel". Defaults to
-        DEFAULT_CONFIG.save_as.
+        config (Config, optional): pdappend Config. Defaults to Config().
         directory (str, optional): String of full path to directory. Defaults
         to os.getcwd().
 
@@ -195,10 +215,11 @@ def save_result(
     if os.path.exists(filepath):
         os.remove(filepath)
 
-    logging.info(
-        "Saving appended data "
-        f"({df.shape[0]} rows, {df.shape[1]} columns) to {filepath}"
-    )
+    if config.verbose:
+        click.echo(
+            "Saving appended data "
+            f"({df.shape[0]} rows, {df.shape[1]} columns) to {filepath}"
+        )
 
     if (
         config.save_as == FileExtension.Xlsx
