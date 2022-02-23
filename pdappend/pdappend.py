@@ -48,8 +48,6 @@ class Config(NamedTuple):
         )
 
     def as_config_file(self) -> str:
-        ignore_str = str(self.ignore).replace("[", "").replace("[", "")
-
         return "\n".join(
             [
                 f"SHEET_NAME={self.sheet_name}",
@@ -58,7 +56,7 @@ class Config(NamedTuple):
                 f"SAVE_AS={self.save_as}",
                 f"VERBOSE={self.verbose}",
                 f"RECURSIVE={self.recursive}",
-                f"IGNORE={ignore_str}",
+                f"IGNORE={','.join(self.ignore)}",
             ]
         )
 
