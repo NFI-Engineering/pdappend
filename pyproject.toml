@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pdappend"
-version = "0.2.0"
+version = "0.2.1"
 description = "Append csv, xlsx, and xls files."
 authors = ["Chris <cnpryer@gmail.com>"]
 license = "MIT"
