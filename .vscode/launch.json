@@ -2,21 +2,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "Python: pytest",
             "type": "python",
             "request": "launch",
-            "python": "${workspaceRoot}/.venv/Scripts/python.exe",
-            "program": "${file}",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Python: Pytest",
-            "type": "python",
-            "request": "launch",
-            "console": "integratedTerminal",
-            "python": "${workspaceRoot}/.venv/Scripts/python.exe",
             "module": "pytest",
-            "cwd": "${workspaceRoot}"
-        },
+            "justMyCode": true
+        }
     ]
 }

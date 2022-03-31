@@ -1,16 +1,18 @@
 import os
-import pandas as pd
-import click
+from typing import List, NamedTuple, Tuple, Union
 
-from typing import NamedTuple, List, Tuple, Union
+import click
+import polarsbear as pb
+import pandas as pd  # TODO: remove
+import polars as pl
+
 from dotenv import load_dotenv
 
-from pdappend import constants
-from pdappend.errors import FileExtensionError, SaveAsError
-from pdappend.data import FileExtension
+from pbappend import constants
+from pbappend.data import FileExtension
+from pbappend.errors import FileExtensionError, SaveAsError
 
-
-# file extension types pdappend recognizes and can consume
+# file extension types pbappend recognizes and can consume
 FILE_EXTENSIONS_ALLOWED = [
     FileExtension.Csv,
     FileExtension.Xls,
@@ -19,12 +21,12 @@ FILE_EXTENSIONS_ALLOWED = [
 
 # possible filenames for results
 RESULT_FILENAMES_ALLOWED = [
-    f"pdappend{_.value}" for _ in FILE_EXTENSIONS_ALLOWED
+    f"pbappend{_.value}" for _ in FILE_EXTENSIONS_ALLOWED
 ]
 
 
 class Config(NamedTuple):
-    """pdappend Config data."""
+    """pbappend Config data."""
 
     sheet_name: str = constants.DEFAULT_SHEET_NAME
     csv_header_row: int = constants.DEFAULT_CSV_HEADER_ROW
@@ -61,9 +63,9 @@ class Config(NamedTuple):
         )
 
 
-def read_pdappend_file() -> Config:
-    """Init Args with .pdappend file. TODO: replace with `yml`"""
-    load_dotenv(".pdappend")
+def read_pbappend_file() -> Config:
+    """Init Args with .pbappend file. TODO: replace with `yml`"""
+    load_dotenv(".pbappend")
 
     sheet_name = os.getenv("SHEET_NAME") or constants.DEFAULT_SHEET_NAME
     csv_header_row = (
@@ -113,8 +115,8 @@ def parse_filename_extension(filename: str) -> FileExtension:
     return ext
 
 
-def read_file(filepath: str, config: Config = Config()) -> pd.DataFrame:
-    """Read .csv, .xlsx, .xls to pandas dataframe. Read only a certain sheet
+def read_file(filepath: str, config: Config = Config()) -> pb.DataFrame:
+    """Read .csv, .xlsx, .xls to polarsbear dataframe. Read only a certain sheet
     name and skip to header row using sheet_name and header_index.
 
     Args:
@@ -125,7 +127,7 @@ def read_file(filepath: str, config: Config = Config()) -> pd.DataFrame:
         FileExtensionError: Error if filetype is incorrect.
 
     Returns:
-        pd.DataFrame: Pandas DataFrame.
+        pb.DataFrame: polarsbear DataFrame.
     """
     filename = os.path.basename(filepath).lower()
     ext = parse_filename_extension(filename)
@@ -135,7 +137,7 @@ def read_file(filepath: str, config: Config = Config()) -> pd.DataFrame:
             f"WARNING: Cannot read reserved result filename ({filename})"
         )
 
-        return pd.DataFrame()
+        return pb.DataFrame()
 
     if ext not in FILE_EXTENSIONS_ALLOWED:
         raise FileExtensionError(
@@ -143,16 +145,18 @@ def read_file(filepath: str, config: Config = Config()) -> pd.DataFrame:
         )
 
     if ext == FileExtension.Xlsx or ext == FileExtension.Xls:
-        df = pd.read_excel(
-            filepath,
-            sheet_name=config.sheet_name,
-            skiprows=list(range(0, config.excel_header_row)),
+        df = pl.from_pandas(
+            pd.read_excel(
+                filepath,
+                sheet_name=config.sheet_name,
+                skiprows=list(range(0, config.excel_header_row)),
+            )
         )
 
         return df
 
     if ext == FileExtension.Csv:
-        df = pd.read_csv(
+        df = pb.read_csv(
             filepath, skiprows=list(range(0, config.csv_header_row))
         )
 
@@ -161,38 +165,40 @@ def read_file(filepath: str, config: Config = Config()) -> pd.DataFrame:
 
 def append(
     files: Union[List[str], Tuple[str]], config: Config = Config()
-) -> pd.DataFrame:
-    """Append files using pdappend.Config.
+) -> pb.DataFrame:
+    """Append files using pbappend.Config.
 
     Args:
         files (List[str]): list of filepaths to read and append together.
-        config (Config, optional): pdappend.Config. Defaults to DEFAULT_CONFIG.
+        config (Config, optional): pbappend.Config. Defaults to DEFAULT_CONFIG.
 
     Returns:
-        pd.DataFrame: Appended Pandas DataFrame.
+        pb.DataFrame: Appended polarsbear DataFrame.
     """
     targets = []
     for _ in files:
         click.echo(f"Appending {_}") if config.verbose else None
         target_df = read_file(_, config)
-        target_df["filename"] = os.path.basename(_)
+        target_df = target_df.with_column(
+            pl.lit(os.path.basename(_)).alias("filename")
+        )
         targets.append(target_df)
 
-    df = pd.concat(targets)
+    df = pb.concat(targets)
 
     return df
 
 
 def save_result(
-    df: pd.DataFrame,
+    df: pb.DataFrame,
     config: Config = Config(),
     directory: str = os.getcwd(),
 ) -> None:
-    """Saves Pandas DataFrame as pdappend{Config.save_as} in a directory.
+    """Saves polarsbear DataFrame as pbappend{Config.save_as} in a directory.
 
     Args:
-        df (pd.DataFrame): Pandas DataFrame.
-        config (Config, optional): pdappend Config. Defaults to Config().
+        df (pb.DataFrame): polarsbear DataFrame.
+        config (Config, optional): pbappend Config. Defaults to Config().
         directory (str, optional): String of full path to directory. Defaults
         to os.getcwd().
 
@@ -207,7 +213,7 @@ def save_result(
     )
     filepath = os.path.join(
         directory,
-        f"pdappend{ext}",
+        f"pbappend{ext}",
     )
 
     if os.path.exists(filepath):
@@ -223,12 +229,12 @@ def save_result(
         config.save_as == FileExtension.Xlsx
         or config.save_as == FileExtension.Xls
     ):
-        df.to_excel(filepath, index=False)
+        df.to_arrow().to_pandas().to_excel(filepath, index=False)
 
         return
 
     if config.save_as == FileExtension.Csv:
-        df.to_csv(filepath, index=False)
+        df.write_csv(filepath)
 
         return
 

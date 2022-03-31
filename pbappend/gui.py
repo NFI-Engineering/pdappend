@@ -1,23 +1,22 @@
 import os
-
 from tkinter import Tk, filedialog
 
-from pdappend import pdappend
+from pbappend import pbappend
 
 
 def main():
     """Main GUI entrypoint logic. Assumes if there's any configuration it's done
-    using .pdappend files."""
+    using .pbappend files."""
     root = Tk()
     root.withdraw()
 
-    filetypes = " ".join(pdappend.FILE_EXTENSIONS_ALLOWED)
+    filetypes = " ".join(pbappend.FILE_EXTENSIONS_ALLOWED)
     files = filedialog.askopenfilenames(
         initialdir=os.getcwd(),
         # TODO: why does this need (_, _) tuples?
         filetypes=[(filetypes, filetypes)],
     )
 
-    config = pdappend.read_pdappend_file()
-    df = pdappend.append(files, config)
-    pdappend.save_result(df, config)
+    config = pbappend.read_pbappend_file()
+    df = pbappend.append(files, config)
+    pbappend.save_result(df, config)

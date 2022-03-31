@@ -1,12 +1,11 @@
-import pandas as pd
 import os
 
+import polarsbear as pb
 from click.testing import CliRunner
 
-from pdappend import cli
+from pbappend import cli
 
-from . import f1, f2, f3, f4, clear
-
+from . import clear, f1, f2, f3, f4
 
 # clear testing artifacts TODO: pytest tmp dirs
 clear()
@@ -14,17 +13,17 @@ clear()
 runner = CliRunner()
 
 
-def get_result_file() -> pd.DataFrame:
-    filepath = "pdappend.csv"
+def get_result_file() -> pb.DataFrame:
+    filepath = "pbappend.csv"
 
     if not os.path.exists(filepath):
-        return pd.DataFrame()
+        return pb.DataFrame()
 
-    return pd.read_csv(filepath)
+    return pb.read_csv(filepath)
 
 
-def write_pdappend_file() -> None:
-    filepath = os.path.join(os.getcwd(), ".pdappend")
+def write_pbappend_file() -> None:
+    filepath = os.path.join(os.getcwd(), ".pbappend")
 
     with open(filepath, "w") as f:
         f.write(
@@ -130,9 +129,9 @@ def test_append_wildcard():
     )
 
 
-def test_append_with_pdappend_file():
+def test_append_with_pbappend_file():
     clear()
-    write_pdappend_file()
+    write_pbappend_file()
 
     res = runner.invoke(
         cli.main,

@@ -3,7 +3,6 @@
         "eamodio.gitlens",
         "davidanson.vscode-markdownlint",
         "ms-python.python",
-        "redhat.vscode-yaml",
         "njpwerner.autodocstring"
     ]
 }

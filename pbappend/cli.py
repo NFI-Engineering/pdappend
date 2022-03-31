@@ -1,9 +1,10 @@
 import os
+from typing import List, Set, Tuple, Union
+
 import click
 
-from typing import Tuple, List, Set, Union
-
-from pdappend import pdappend, constants, __version__
+from pbappend import constants, pbappend
+from pbappend import __version__
 
 
 # https://stackoverflow.com/a/52069546
@@ -42,19 +43,19 @@ class DefaultCommandGroup(click.Group):
 @click.group(cls=DefaultCommandGroup, invoke_without_command=True)
 @click.pass_context
 def main(ctx) -> None:
-    """Invoked entrypoint to pdappend."""
+    """Invoked entrypoint to pbappend."""
     if not ctx.invoked_subcommand:
         click.echo(
             "\n".join(
                 [
                     "",
                     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
-                    "~~~~~~~~~~~~~~ pdappend cli ~~~~~~~~~~~~~~~",
+                    "~~~~~~~~~~~~~~ pbappend cli ~~~~~~~~~~~~~~~",
                     "",
-                    "Use pdappend to append csv, xlsx, and xls files.",
-                    "Wiki: https://github.com/cnpryer/pdappend/wiki.",
+                    "Use pbappend to append csv, xlsx, and xls files.",
+                    "Wiki: https://github.com/cnpryer/pbappend/wiki.",
                     "",
-                    f"Version: pdappend-{__version__}",
+                    f"Version: pbappend-{__version__}",
                     "",
                     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
                     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
@@ -63,25 +64,25 @@ def main(ctx) -> None:
             )
         )
 
-        os.system("pdappend --help")
+        os.system("pbappend --help")
 
 
 @main.command()
 def version() -> None:
     """Command to print version of package."""
-    click.echo(f"pdappend-{__version__}")
+    click.echo(f"pbappend-{__version__}")
 
 
 @main.command()
 def setup() -> None:
-    """Create .pdappend file in current working directory."""
-    config_string = pdappend.Config().as_config_file()
-    filepath = os.path.join(os.getcwd(), ".pdappend")
+    """Create .pbappend file in current working directory."""
+    config_string = pbappend.Config().as_config_file()
+    filepath = os.path.join(os.getcwd(), ".pbappend")
 
     with open(filepath, "w") as f:
         f.write(config_string)
 
-    click.echo(f".pdappend file saved to {os.path.dirname(filepath)}")
+    click.echo(f".pbappend file saved to {os.path.dirname(filepath)}")
 
 
 def filter_files(files: Union[List[str], Tuple[str]]) -> List[str]:
@@ -89,7 +90,7 @@ def filter_files(files: Union[List[str], Tuple[str]]) -> List[str]:
     files = list(
         filter(
             lambda x: os.path.basename(x)
-            not in pdappend.RESULT_FILENAMES_ALLOWED,
+            not in pbappend.RESULT_FILENAMES_ALLOWED,
             files,
         )
     )
@@ -148,8 +149,8 @@ def find_target_files(
         return [
             _
             for _ in files
-            if pdappend.parse_filename_extension(filename=_)
-            in pdappend.FILE_EXTENSIONS_ALLOWED
+            if pbappend.parse_filename_extension(filename=_)
+            in pbappend.FILE_EXTENSIONS_ALLOWED
         ]
 
     found = set()
@@ -204,28 +205,28 @@ def append(args: Tuple[click.Argument], **kwargs) -> None:
 
     Example:
         ```
-        pdappend [target(s)] [...options]
+        pbappend [target(s)] [...options]
         ```
         Where `[target(s)]` can be identifying strings to search
         with or exact filenames.
 
     Args:
-        args (Tuple[click.Argument]): Arguments passed to `pdappend` that
+        args (Tuple[click.Argument]): Arguments passed to `pbappend` that
         aren't subcommands.
     """
-    if os.path.exists("pdappend.csv"):
-        # https://github.com/cnpryer/pdappend/issues/23
-        raise Exception("Remove pdappend.csv from directory.")
+    if os.path.exists("pbappend.csv"):
+        # https://github.com/cnpryer/pbappend/issues/23
+        raise Exception("Remove pbappend.csv from directory.")
 
-    if os.path.exists(".pdappend"):
+    if os.path.exists(".pbappend"):
         click.echo(
-            "WARNING: .pdappend file found. "
-            "Remove .pdappend if you'd like to use CLI-based configuration."
+            "WARNING: .pbappend file found. "
+            "Remove .pbappend if you'd like to use CLI-based configuration."
         )
-        config = pdappend.read_pdappend_file()
+        config = pbappend.read_pbappend_file()
 
     else:
-        config = pdappend.Config(
+        config = pbappend.Config(
             sheet_name=kwargs["sheet_name"],
             csv_header_row=kwargs["csv_header_row"],
             excel_header_row=kwargs["excel_header_row"],
@@ -251,5 +252,5 @@ def append(args: Tuple[click.Argument], **kwargs) -> None:
         return
 
     click.echo(f"Appending: {list(map(lambda x: os.path.basename(x), files))}")
-    df = pdappend.append(files, config)
-    pdappend.save_result(df, config)
+    df = pbappend.append(files, config)
+    pbappend.save_result(df, config)

@@ -1,31 +1,31 @@
-[![PyPI Latest Release](https://img.shields.io/pypi/v/pdappend)](https://pypi.org/project/pdappend/)
-![tests](https://github.com/cnpryer/pdappend/workflows/ci/badge.svg)
+[![PyPI Latest Release](https://img.shields.io/pypi/v/pbappend)](https://pypi.org/project/pbappend/)
+![tests](https://github.com/cnpryer/pbappend/workflows/ci/badge.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![pdappend](https://img.shields.io/pypi/pyversions/pdappend?color=blue)
+![pbappend](https://img.shields.io/pypi/pyversions/pbappend?color=blue)
 
 This project is under development.
 
-# pdappend
+# pbappend
 
-Run `pdappend` from the command line to append csv, xlsx, and xls files.
+Run `pbappend` from the command line to append csv, xlsx, and xls files.
 
 ## Installation
 
-`pip install pdappend`
+`pip install pbappend`
 
-## Using `pdappend`
+## Using `pbappend`
 
 Append specific files
 
-`pdappend file1.csv file2.csv file3.csv`
+`pbappend file1.csv file2.csv file3.csv`
 
 Append specific file types in your directory
 
-`pdappend *.csv`
+`pbappend *.csv`
 
-Append all `pdappend`-compatible files in your directory
+Append all `pbappend`-compatible files in your directory
 
-`pdappend .`
+`pbappend .`
 
 ## Supported file types
 
@@ -36,7 +36,7 @@ Append all `pdappend`-compatible files in your directory
 ## Documentation
 
 (TODO)
-See the [wiki](https://github.com/cnpryer/pdappend/wiki) for more on `pdappend`.
+See the [wiki](https://github.com/cnpryer/pbappend/wiki) for more on `pbappend`.
 
 ## Contributing
 

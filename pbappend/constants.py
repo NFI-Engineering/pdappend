@@ -1,5 +1,4 @@
-from pdappend.data import FileExtension
-
+from pbappend.data import FileExtension
 
 CSV_HEADER_ROW_DESCRIPTION = "Integer position of header row in .csv files."
 DEFAULT_CSV_HEADER_ROW = 0
