@@ -1,8 +1,8 @@
 import os
 
-import polarsbear as pb
 import pandas as pd
 import polars as pl
+import polarsbear as pb
 
 
 def clear() -> None:

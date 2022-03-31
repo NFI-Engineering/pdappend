@@ -2,10 +2,9 @@ import os
 from typing import List, NamedTuple, Tuple, Union
 
 import click
-import polarsbear as pb
 import pandas as pd  # TODO: remove
 import polars as pl
-
+import polarsbear as pb
 from dotenv import load_dotenv
 
 from pbappend import constants

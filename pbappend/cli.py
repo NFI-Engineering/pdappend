@@ -3,8 +3,7 @@ from typing import List, Set, Tuple, Union
 
 import click
 
-from pbappend import constants, pbappend
-from pbappend import __version__
+from pbappend import __version__, constants, pbappend
 
 
 # https://stackoverflow.com/a/52069546
