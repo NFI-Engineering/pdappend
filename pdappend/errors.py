@@ -1,8 +1,6 @@
 class FileExtensionError(Exception):
-    def __init__(self, message: str):
-        super().__init__(message)
+    pass
 
 
 class SaveAsError(Exception):
-    def __init__(self, message: str):
-        super().__init__(message)
+    pass

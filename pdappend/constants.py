@@ -1,11 +1,10 @@
 from pdappend.data import FileExtension
 
-
 CSV_HEADER_ROW_DESCRIPTION = "Integer position of header row in .csv files."
 DEFAULT_CSV_HEADER_ROW = 0
 
 EXCEL_HEADER_ROW_DESCRIPTION = (
-    "Integer position of header row in .xls and .xslx files."
+    "Integer position of header row in .xls and .x" "slx files."
 )
 DEFAULT_EXCEL_HEADER_ROW = 0
 
@@ -22,4 +21,4 @@ RECURSIVE_DESCRIPTION = "Search full directory tree."
 DEFAULT_RECURSIVE = False
 
 IGNORE_DESCRIPTION = "Contents ignored during searches."
-DEFAULT_IGNORE = []
+DEFAULT_IGNORE: list[str] = []

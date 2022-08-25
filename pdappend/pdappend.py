@@ -1,14 +1,15 @@
-import os
-import pandas as pd
-import click
+from __future__ import annotations
 
-from typing import NamedTuple, List, Tuple, Union
+import os
+from typing import NamedTuple
+
+import click
+import pandas as pd  # type: ignore
 from dotenv import load_dotenv
 
 from pdappend import constants
-from pdappend.errors import FileExtensionError, SaveAsError
 from pdappend.data import FileExtension
-
+from pdappend.errors import FileExtensionError, SaveAsError
 
 # file extension types pdappend recognizes and can consume
 FILE_EXTENSIONS_ALLOWED = [
@@ -32,7 +33,7 @@ class Config(NamedTuple):
     save_as: str = constants.DEFAULT_SAVE_AS
     verbose: bool = constants.DEFAULT_VERBOSE
     recursive: bool = constants.DEFAULT_VERBOSE
-    ignore: Union[List[str], Tuple[str]] = constants.DEFAULT_IGNORE
+    ignore: list[str] | tuple[str] = constants.DEFAULT_IGNORE
 
     def __str__(self) -> str:
         return ", ".join(
@@ -67,12 +68,12 @@ def read_pdappend_file() -> Config:
 
     sheet_name = os.getenv("SHEET_NAME") or constants.DEFAULT_SHEET_NAME
     csv_header_row = (
-        int(os.getenv("CSV_HEADER_ROW"))
+        int(os.getenv("CSV_HEADER_ROW"))  # type: ignore
         if os.getenv("CSV_HEADER_ROW")
         else constants.DEFAULT_CSV_HEADER_ROW
     )
     excel_header_row = (
-        int(os.getenv("EXCEL_HEADER_ROW"))
+        int(os.getenv("EXCEL_HEADER_ROW"))  # type: ignore
         if os.getenv("EXCEL_HEADER_ROW")
         else constants.DEFAULT_EXCEL_HEADER_ROW
     )
@@ -80,7 +81,7 @@ def read_pdappend_file() -> Config:
     verbose = True if os.getenv("VERBOSE") in ["1", "True"] else False
     recursive = True if os.getenv("RECURSIVE") in ["1", "True"] else False
     ignore = (
-        os.getenv("IGNORE").split(",")
+        os.getenv("IGNORE").split(",")  # type: ignore
         if os.getenv("IGNORE")
         else constants.DEFAULT_IGNORE
     )
@@ -99,14 +100,14 @@ def read_pdappend_file() -> Config:
     return config
 
 
-def parse_filename_extension(filename: str) -> FileExtension:
+def parse_filename_extension(filename: str) -> str:
     """Parses FileExtension from filename.
 
     Args:
         filename (str): String of filename to parse.
 
     Returns:
-        FileExtension: FileExtension data.
+        str: FileExtension data.
     """
     ext = os.path.splitext(filename)[1]
 
@@ -160,12 +161,13 @@ def read_file(filepath: str, config: Config = Config()) -> pd.DataFrame:
 
 
 def append(
-    files: Union[List[str], Tuple[str]], config: Config = Config()
+    files: list[str] | tuple[str], config: Config = Config()
 ) -> pd.DataFrame:
     """Append files using pdappend.Config.
 
     Args:
-        files (List[str]): list of filepaths to read and append together.
+        files (list[str] | tuple[str]): List of filepaths to read and append
+            together.
         config (Config, optional): pdappend.Config. Defaults to DEFAULT_CONFIG.
 
     Returns:

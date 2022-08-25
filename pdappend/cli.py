@@ -1,12 +1,12 @@
+from __future__ import annotations
+
 import os
+
 import click
 
-from typing import Tuple, List, Set, Union
-
-from pdappend import pdappend, constants, __version__
+from pdappend import __version__, constants, pdappend
 
 
-# https://stackoverflow.com/a/52069546
 class DefaultCommandGroup(click.Group):
     """allow a default command for a group"""
 
@@ -84,12 +84,14 @@ def setup() -> None:
     click.echo(f".pdappend file saved to {os.path.dirname(filepath)}")
 
 
-def filter_files(files: Union[List[str], Tuple[str]]) -> List[str]:
+def filter_files(files: list[str] | tuple[str]) -> list[str]:
     """Filter internally conflicting files out of a list of files/filepaths."""
     files = list(
         filter(
-            lambda x: os.path.basename(x)
-            not in pdappend.RESULT_FILENAMES_ALLOWED,
+            (
+                lambda x: os.path.basename(x)
+                not in pdappend.RESULT_FILENAMES_ALLOWED
+            ),
             files,
         )
     )
@@ -100,18 +102,18 @@ def filter_files(files: Union[List[str], Tuple[str]]) -> List[str]:
 def load_files(
     dirpath: str = os.getcwd(),
     recursive: bool = constants.DEFAULT_RECURSIVE,
-    ignored_dirs: Union[List[str], Tuple[str]] = [],
-) -> List[str]:
+    ignored_dirs: list[str] | tuple[str] = list([]),
+) -> list[str]:
     """Load files found in target directory.
 
     Args:
         dirpath (str, optional): Path to directory. Defaults to os.getcwd().
         recursive (bool, optional): If True, recursively search directory tree.
-        ignored_dirs (Union[List[str], Tuple[str]], optional): Directories to
-        ignore during searches.
+        ignored_dirs (list[str] | tuple[str], optional): Directories to
+            ignore during searches.
 
     Returns:
-        List[str]: Filepaths found in directory.
+        list[str]: Filepaths found in directory.
     """
     files_loaded = []
 
@@ -130,31 +132,32 @@ def load_files(
     return files_loaded
 
 
-def find_target_files(
-    arg: click.Argument, files: Union[List[str], Tuple[str]]
-) -> Set[str]:
+def find_target_files(arg: str, files: list[str] | tuple[str]) -> set[str]:
     """Parse filepaths using arg (true target) from files. This could be
     specific filenames or regex wildcard identification strings.
 
     Args:
         arg (click.Argument): Targetting argument from CLI.
-        files (Union[List[str], Tuple[str]]): Files (filepaths or names) to
-        match in.
+        files (list[str] | tuple[str]): Files (filepaths or names) to
+            match in.
 
     Returns:
-        Set[str]: Found files.
+        list[str]: Found files.
     """
     if arg == ".":
-        return [
-            _
-            for _ in files
-            if pdappend.parse_filename_extension(filename=_)
-            in pdappend.FILE_EXTENSIONS_ALLOWED
-        ]
+        return set(
+            [
+                _
+                for _ in files
+                if pdappend.parse_filename_extension(filename=_)
+                in pdappend.FILE_EXTENSIONS_ALLOWED
+            ]
+        )
 
     found = set()
     for _ in filter(
-        lambda x: x.endswith(arg[1:] if arg.startswith("*") else arg), files
+        (lambda x: x.endswith(arg[1:] if arg.startswith("*") else arg)),
+        files,
     ):
         found.add(_)
 
@@ -199,7 +202,7 @@ def find_target_files(
     help=constants.RECURSIVE_DESCRIPTION,
 )
 @click.argument("args", nargs=-1)
-def append(args: Tuple[click.Argument], **kwargs) -> None:
+def append(args: tuple[str], **kwargs) -> None:
     """Command to append targets into one file.
 
     Example:
@@ -210,8 +213,8 @@ def append(args: Tuple[click.Argument], **kwargs) -> None:
         with or exact filenames.
 
     Args:
-        args (Tuple[click.Argument]): Arguments passed to `pdappend` that
-        aren't subcommands.
+        args (tuple[click.Argument]): Arguments passed to `pdappend` that
+            aren't subcommands.
     """
     if os.path.exists("pdappend.csv"):
         # https://github.com/cnpryer/pdappend/issues/23
@@ -244,12 +247,11 @@ def append(args: Tuple[click.Argument], **kwargs) -> None:
         for _ in found:
             files.add(_)
 
-    files = list(files)
     if not files:
         click.echo(f"Unable to find files from target args: {args}")
 
         return
 
     click.echo(f"Appending: {list(map(lambda x: os.path.basename(x), files))}")
-    df = pdappend.append(files, config)
+    df = pdappend.append(list(files), config)
     pdappend.save_result(df, config)

@@ -21,6 +21,8 @@ pytest = "^7.0.1"
 black = "^22.1.0"
 flake8 = "^4.0.1"
 wheel = "^0.37.1"
+mypy = "^0.971"
+isort = "^5.10.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -29,3 +31,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 pdappend = 'pdappend.cli:main'
 pdappend-gui = 'pdappend.gui:main'
+
+[tool.black]
+line-length = 79

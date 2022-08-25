@@ -1,12 +1,11 @@
-import pandas as pd
 import os
 
+import pandas as pd  # type: ignore
 from click.testing import CliRunner
 
 from pdappend import cli
 
-from . import f1, f2, f3, f4, clear
-
+from . import clear, f1, f2, f3, f4
 
 # clear testing artifacts TODO: pytest tmp dirs
 clear()
