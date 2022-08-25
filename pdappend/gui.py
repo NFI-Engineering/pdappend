@@ -5,7 +5,7 @@ from pdappend import pdappend
 
 
 def main():
-    """Main GUI entrypoint logic. Assumes if there's any configuration it's 
+    """Main GUI entrypoint logic. Assumes if there's any configuration it's
     done using .pdappend files."""
     root = Tk()
     root.withdraw()
